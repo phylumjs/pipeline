@@ -27,6 +27,8 @@ npm i @phylum/pipeline
 	+ [Event: 'reject'](#event-reject)
 	+ [Event: 'dispose-error'](#event-dispose-error)
 + [Tasks](#tasks)
+	+ [ctx.data](#ctxdata)
+	+ [ctx.pipeline](#ctxpipeline)
 	+ [ctx.isEntry](#ctxisentry)
 	+ [ctx.isUnused](#ctxisunused)
 	+ [ctx.use(fn)](#ctxusefn)
@@ -106,6 +108,12 @@ async function example(ctx) {
 	console.log('Hello World!')
 }
 ```
+
+### ctx.data
+An object to store custom data that is related to the current context.
+
+### ctx.pipeline
+A reference to the pipeline.
 
 ### ctx.isEntry
 True if this task is the entry task of the pipeline.
