@@ -10,6 +10,7 @@
 	"devDependencies": {
 		"ava": "^0.25.0"
 	},
+	"repository": "github:phylumjs/pipeline",
 	"author": "Max J. Polster",
 	"license": "MIT"
 }
