@@ -1,0 +1,15 @@
+{
+	"name": "@phylum/pipeline",
+	"version": "1.0.0",
+	"description": "Flexible async task runner.",
+	"main": "lib",
+	"scripts": {
+		"test": "ava --verbose",
+		"dev": "ava --watch --verbose"
+	},
+	"devDependencies": {
+		"ava": "^0.25.0"
+	},
+	"author": "Max J. Polster",
+	"license": "MIT"
+}
