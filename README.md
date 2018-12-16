@@ -25,6 +25,7 @@ npm i @phylum/pipeline
 + [Pipeline](#class-pipeline)
 	+ [new Pipeline(entry)](#new-pipelineentry)
 	+ [pipeline.data](#pipelinedata)
+	+ [pipeline.isEnabled](#pipelineisenabled)
 	+ [pipeline.enable()](#pipelineenable)
 	+ [pipeline.disable()](#pipelinedisable)
 	+ [Event: 'resolve'](#event-resolve)
@@ -61,6 +62,10 @@ const pipeline = new Pipeline(entry)
 
 ### pipeline.data
 An object to store custom data.
+
+### pipeline.isEnabled
+Check wether this pipeline is enabled or not.<br/>
+*Calls to .enable(..) or .disable(..) will set this value immediately without waiting for pending promises.*
 
 ### pipeline.enable()
 Enable the pipeline if not enabled.

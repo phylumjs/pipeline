@@ -32,6 +32,23 @@ test('use (api assertions)', async t => {
 	}).enable())
 })
 
+test('sync handlers', async t => {
+	t.is(await new Pipeline(ctx => {
+		return 'foo'
+	}).enable(), 'foo')
+	t.is(await t.throws(new Pipeline(ctx => {
+		throw 'foo'
+	}).enable()), 'foo')
+	t.is(await new Pipeline(async ctx => {
+		return ctx.use(() => 'foo')
+	}).enable(), 'foo')
+	t.is(await t.throws(new Pipeline(async ctx => {
+		await ctx.use(() => {
+			throw 'foo'
+		})
+	}).enable()), 'foo')
+})
+
 test('push, dispose', async t => {
 	let entryCalled = 0
 	let entryDisposed = 0
@@ -271,13 +288,15 @@ test('add multiple (and non-) disposals', async t => {
 })
 
 test('disable', async t => {
-	t.plan(1)
+	t.plan(3)
 	const pipeline = new Pipeline(async ctx => {
 		t.pass()
 		setImmediate(() => ctx.dispose())
 	})
 	await pipeline.enable()
+	t.true(pipeline.isEnabled)
 	pipeline.disable()
+	t.false(pipeline.isEnabled)
 	pipeline.disable()
 })
 
