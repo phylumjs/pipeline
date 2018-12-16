@@ -276,6 +276,8 @@ const webpack = require('webpack')
 
 async function bundleServer(ctx) {
 	const compiler = webpack({
+		target: 'node',
+		mode: ctx.pipeline.data.dev ? 'development' : 'production',
 		entry: {index: './server.js'}
 		output: {
 			path: path.join(__dirname, 'dist'),
@@ -396,7 +398,8 @@ const pipeline = new Pipeline(async ctx => {
 // Parse command line args:
 Object.assign(pipeline.data, parse([
 	{name: 'watch', type: Boolean},
-	{name: 'run', type: Boolean}
+	{name: 'run', type: Boolean},
+	{name: 'dev', type: Boolean}
 ]))
 
 // Handle errors and start the pipeline:
