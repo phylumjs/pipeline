@@ -5,6 +5,7 @@ const Pipeline = require('..')
 
 test('pipeline (api assertions)', t => {
 	t.throws(() => new Pipeline('foo'))
+	t.throws(() => new Pipeline(() => {}, 'bar'))
 })
 
 test('use', async t => {
@@ -394,4 +395,42 @@ test('destroy unused', async t => {
 			}
 		})
 	})
+})
+
+test('destroy unused manually', async t => {
+	let state = 0
+	let fooDisposed = false
+	async function foo(ctx) {
+		t.false(fooDisposed)
+		ctx.on('dispose', () => {
+			fooDisposed = true
+		})
+	}
+	const pipeline = new Pipeline(async ctx => {
+		if (state === 0) {
+			await ctx.use(foo)
+			setImmediate(() => {
+				ctx.dispose()
+			})
+		} else if (state === 1) {
+			setImmediate(() => ctx.dispose())
+			ctx.push(Promise.reject('foo'))
+		} else {
+			setImmediate(() => ctx.dispose())
+		}
+		state++
+	}, {
+		autoDisposeUnused: false
+	})
+	pipeline.enable()
+	await new Promise(resolve => {
+		pipeline.on('resolve', res => {
+			if (state === 4) {
+				resolve()
+			}
+		})
+	})
+	t.false(fooDisposed)
+	await pipeline.disposeUnused()
+	t.true(fooDisposed)
 })

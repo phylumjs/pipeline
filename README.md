@@ -23,11 +23,12 @@ npm i @phylum/pipeline
 
 # Documentation
 + [Pipeline](#class-pipeline)
-	+ [new Pipeline(entry)](#new-pipelineentry)
+	+ [new Pipeline(entry, &#91;options&#93;)](#new-pipelineentry-options)
 	+ [pipeline.data](#pipelinedata)
 	+ [pipeline.isEnabled](#pipelineisenabled)
 	+ [pipeline.enable()](#pipelineenable)
 	+ [pipeline.disable()](#pipelinedisable)
+	+ [pipeline.disposeUnused()](#pipelinedisposeunused)
 	+ [Event: 'resolve'](#event-resolve)
 	+ [Event: 'reject'](#event-reject)
 	+ [Event: 'dispose-error'](#event-dispose-error)
@@ -59,12 +60,14 @@ The pipeline class runs tasks and manages their states.
 import Pipeline from '@phylum/pipeline'
 ```
 
-### new Pipeline(entry)
+### new Pipeline(entry, [options])
 Create a new pipeline instance.
 ```js
 const pipeline = new Pipeline(entry)
 ```
 + entry `<function>` - The entry task.
++ options `<object>` - Optional. An object with the following options:
+	+ autoDisposeUnused `<boolean>` - Optional. Automatically dispose unused tasks when the pipeline resolves or rejects. If disabled, unused tasks will stay alive until `pipeline.destroyUnused()` is called. Default is `true`
 
 ### pipeline.data
 An object to store custom data.
@@ -84,6 +87,14 @@ await pipeline.enable()
 Disable the pipeline if enabled and dispose all tasks.
 ```js
 await pipeline.disable()
+```
++ returns `<Promise>` - A promise that resolves when all tasks have been disposed.
+
+### pipeline.disposeUnused()
+Manually dispose unused tasks.<br/>
+*This can be used to dispose unused tasks while the pipeline is still enabled.*
+```js
+await pipeline.disposeUnused()
 ```
 + returns `<Promise>` - A promise that resolves when all tasks have been disposed.
 
@@ -205,7 +216,8 @@ async function example(ctx) {
 + returns `<boolean>` - True if an update handler is registered for the specified task. Otherwise false.
 
 ### ctx.drop(fn)
-Remove a dependency and possible update handlers.
+Remove a dependency and possible update handlers.<br/>
+*Dropping a dependency will not dispose it automatically. See pipeline options and pipeline.disposeUnused() for more info.*
 ```js
 async function example(ctx) {
 	// ...
