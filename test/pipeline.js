@@ -14,6 +14,20 @@ test('use', async t => {
 	t.is(await pipeline.enable(), 'foo')
 })
 
+test('use (from disposed context)', async t => {
+	async function foo() {}
+	await t.throws(new Pipeline(async ctx => {
+		ctx.dispose(true)
+		ctx.use(foo)
+	}).enable())
+})
+
+test('use (api assertions)', async t => {
+	await t.throws(new Pipeline(async ctx => {
+		ctx.use('foo')
+	}).enable())
+})
+
 test('push, dispose', async t => {
 	let entryCalled = 0
 	let entryDisposed = 0
@@ -94,16 +108,49 @@ test('push, pullImmediate', async t => {
 	})
 })
 
+test('pull (api assertions)', async t => {
+	async function foo() {}
+	function throws(cb) {
+		return t.throws(new Pipeline(async ctx => {
+			return cb(ctx)
+		}).enable())
+	}
+	await throws(ctx => {
+		t.true(ctx.pullImmediate(foo, () => {}))
+		ctx.pull(foo, () => {})
+	})
+	await throws(ctx => {
+		t.true(ctx.pull(foo, () => {}))
+		ctx.pullImmediate(foo, () => {})
+	})
+	await throws(ctx => ctx.pull(foo, 'bar'))
+	await throws(ctx => ctx.pullImmediate(foo, 'bar'))
+	await throws(ctx => ctx.pull('foo', foo))
+	await throws(ctx => ctx.pullImmediate('foo', foo))
+})
+
+test('pull (from disposed context)', async t => {
+	async function foo() {}
+	await new Pipeline(async ctx => {
+		ctx.dispose(true)
+		t.false(ctx.pull(foo, () => {}))
+		t.false(ctx.pullImmediate(foo, () => {}))
+	}).enable()
+})
+
 test('dispose', async t => {
 	t.plan(2)
 	let disposed = false
-	const pipeline = new Pipeline(async ctx => {
+	async function foo(ctx) {
 		if (!disposed) {
 			disposed = true
 			ctx.dispose()
 			return false
 		}
 		return true
+	}
+	const pipeline = new Pipeline(async ctx => {
+		return ctx.use(foo)
 	})
 	pipeline.enable()
 	await new Promise(resolve => {
@@ -114,6 +161,41 @@ test('dispose', async t => {
 			}
 		})
 	})
+})
+
+test('dispose only once', async t => {
+	t.plan(1)
+	let disposed = false
+	await new Pipeline(async ctx => {
+		if (!disposed) {
+			disposed = true
+			ctx.on('dispose', () => {
+				t.pass()
+			})
+			ctx.dispose()
+			ctx.dispose()
+		}
+	}).enable()
+})
+
+test('dispose silent', async t => {
+	let disposed = false
+	async function foo(ctx) {
+		if (disposed) {
+			t.fail('Silently disposed task was called twice.')
+		} else {
+			disposed = true
+			ctx.dispose(true)
+		}
+	}
+	const pipeline = new Pipeline(async ctx => {
+		const disposedBefore = disposed
+		await ctx.use(foo)
+		return disposedBefore
+	})
+	t.false(await pipeline.enable())
+	await new Promise(setImmediate)
+	t.false(await pipeline.enable())
 })
 
 test('await context disposals', async t => {
