@@ -162,6 +162,38 @@ test('pull (from disposed context)', async t => {
 	}).enable()
 })
 
+test('drop', async t => {
+	let resolvePushed
+	let pushed = new Promise(resolve => {
+		resolvePushed = resolve
+	})
+	async function foo(ctx) {
+		setImmediate(() => {
+			ctx.push('foo')
+			resolvePushed()
+		})
+	}
+	const pipeline = new Pipeline(async ctx => {
+		await ctx.use(foo)
+		await ctx.pull(foo, () => {
+			t.fail('Got update from dropped dependency.')
+		})
+		t.true(ctx.isPulling(foo))
+		ctx.drop(foo)
+		t.false(ctx.isPulling(foo))
+	})
+	await pipeline.enable()
+	await pushed
+})
+
+test('drop non dependency', async t => {
+	async function foo() {}
+	await new Pipeline(async ctx => {
+		ctx.drop(foo)
+		t.pass()
+	}).enable()
+})
+
 test('dispose', async t => {
 	t.plan(2)
 	let disposed = false

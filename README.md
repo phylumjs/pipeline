@@ -40,7 +40,8 @@ npm i @phylum/pipeline
 	+ [ctx.push(state)](#ctxpushstate)
 	+ [ctx.pull(fn, handler)](#ctxpullfn-handler)
 	+ [ctx.pullImmediate(fn, handler)](#ctxpullimmediatefn-handler)
-	+ [ctx.isPulling(fn)](#ctxispulling)
+	+ [ctx.isPulling(fn)](#ctxispullingfn)
+	+ [ctx.drop(fn)](#ctxdropfn)
 	+ [ctx.dispose(&#91;silent&#93;)](#ctxdisposesilent)
 	+ [Event: 'dispose'](#event-dispose)
 + [Examples](#examples)
@@ -200,6 +201,18 @@ async function example(ctx) {
 	ctx.isPulling(foo) === true
 }
 ```
++ fn `<function>` - The dependency task.
++ returns `<boolean>` - True if an update handler is registered for the specified task. Otherwise false.
+
+### ctx.drop(fn)
+Remove a dependency and possible update handlers.
+```js
+async function example(ctx) {
+	// ...
+	ctx.drop(foo)
+}
+```
++ fn `<function>` - The dependency task.
 
 ### ctx.dispose([silent])
 Dispose this task.<br/>
