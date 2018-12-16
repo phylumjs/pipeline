@@ -82,10 +82,12 @@ test('push, pull', async t => {
 		return false
 	}
 	const pipeline = new Pipeline(async ctx => {
+		t.false(ctx.isPulling(foo))
 		ctx.pull(foo, state => {
 			pulled++
 			ctx.push(state)
 		})
+		t.true(ctx.isPulling(foo))
 		t.is(pulled, 0)
 		return ctx.use(foo)
 	})
@@ -148,6 +150,7 @@ test('pull (api assertions)', async t => {
 	await throws(ctx => ctx.pullImmediate(foo, 'bar'))
 	await throws(ctx => ctx.pull('foo', foo))
 	await throws(ctx => ctx.pullImmediate('foo', foo))
+	await throws(ctx => ctx.isPulling('foo'))
 })
 
 test('pull (from disposed context)', async t => {
