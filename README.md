@@ -42,6 +42,10 @@ npm i @phylum/pipeline
 	+ [ctx.pullImmediate(fn, handler)](#ctxpullimmediatefn-handler)
 	+ [ctx.dispose(&#91;silent&#93;)](#ctxdisposesilent)
 	+ [Event: 'dispose'](#event-dispose)
++ [Examples](#examples)
+	+ [Webpack](#webpack)
+	+ [Starting processes](#starting-processes)
+	+ [Building a CLI](#building-a-cli)
 
 <br/>
 
@@ -217,3 +221,167 @@ async function example(ctx) {
 ```
 + addDisposal `<function>` - A function to add a disposal state.
 	+ state `<Promise> | <any>` - A promise to delay the re-execution of the task or the promise returned by `pipeline.disable()`.
+
+<br/>
+
+
+
+# Examples
+The following examples show how to setup a basic build system for server-side code using webpack. It consists of a compilation task, a task that runs server code (for development) and a cli module that integrates the pipeline.
+
+### Webpack
+The following task bundles server-side code using webpack:
+```js
+// bundle-server.js
+'use strict'
+
+const path = require('path')
+const webpack = require('webpack')
+
+async function bundleServer(ctx) {
+	const compiler = webpack({
+		entry: {index: './server.js'}
+		output: {
+			path: path.join(__dirname, 'dist'),
+			filename: '[name].js'
+		},
+		// ...
+	})
+
+	return new Promise((resolve, reject) => {
+		// A handler function to handle webpack results:
+		let handler = (err, stats) => {
+			// Set the handler to push further updates:
+			handler = (err, stats) => {
+				if (err) {
+					ctx.push(Promise.reject(err))
+				} else {
+					ctx.push(stats)
+				}
+			}
+			if (err) {
+				reject(err)
+			} else {
+				resolve(stats)
+			}
+		}
+
+		// Check if watch mode should be enabled:
+		if (ctx.pipeline.data.watch) {
+			// Create a watcher and call the handler for every result:
+			const watcher = compiler.watch({}, (e, s) => handler(e, s))
+			// Destroy the watcher when disposed:
+			ctx.on('dispose', addDisposal => {
+				addDisposal(new Promise(resolve => watcher.close(resolve)))
+			})
+		} else {
+			// Run compiler without watching:
+			compiler.run(handler)
+		}
+	})
+}
+
+module.exports = bundleServer
+```
+
+### Starting processes
+The following task executes and updates server-side code in a child process:
+```js
+// run-server.js
+'use strict'
+
+const path = require('path')
+const cp = require('child_process')
+const bundleServer = require('./bundle-server')
+
+async function runServer(ctx) {
+	if (!ctx.pipeline.data.run) {
+		return
+	}
+
+	let proc
+
+	// A function to update or create the process:
+	function update() {
+		if (proc) {
+			// This would be the place to send hmr update signals to the
+			// process and waiting for a response instead restarting it.
+			proc.kill()
+		}
+		const newProc = cp.fork(path.join(__dirname, 'dist'), {cwd: __dirname})
+		newProc.on('error', err => {
+			ctx.push(Promise.reject(err))
+		})
+		newProc.on('exit', () => {
+			if (proc === newProc) {
+				proc = null
+			}
+		})
+		proc = newProc
+	}
+
+	// Pull updates from the 'bundleServer' task above:
+	ctx.pullImmediate(bundleServer, state => {
+		state.then(update, err => {
+			ctx.push(Promise.reject(err))
+		})
+	})
+
+	// Kill the process when disposed:
+	ctx.on('dispose', () => {
+		if (proc) {
+			proc.kill()
+			proc = null
+		}
+	})
+}
+
+module.exports = runServer
+```
+
+### Building a CLI
+The following code shows how you could build a simple cli that uses the first two examples:
+```js
+#!/usr/bin/env node
+'use strict'
+
+const parse = require('command-line-args')
+const bundleServer = require('./bundle-server')
+const runServer = require('./run-server')
+
+const pipeline = new Pipeline(async ctx => {
+	// Include bundleServer and runServer tasks:
+	await Promise.all([
+		ctx.use(bundleServer),
+		ctx.use(runServer)
+	])
+})
+
+// Parse command line args:
+Object.assign(pipeline.data, parse([
+	{name: 'watch', type: Boolean},
+	{name: 'run', type: Boolean}
+]))
+
+// Handle errors and start the pipeline:
+pipeline.on('reject', err => {
+	console.error(err)
+})
+pipeline.enable()
+
+process.on('SIGINT', () => {
+	if (pipeline.isEnabled) {
+		pipeline.disable()
+	} else {
+		process.exit()
+	}
+})
+```
+The cli will be able to do the following:
+
+| Command | Description |
+|-|-|
+| `node cli` | Just compile everything and exit |
+| `node cli --watch` | Compile and watch for changes |
+| `node cli --run` | Compile and run |
+| `node cli --watch --run` | Compile, run and watch for changes |
