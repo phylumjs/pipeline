@@ -5,10 +5,12 @@
 	"main": "lib",
 	"scripts": {
 		"test": "nyc -- ava --verbose",
-		"dev": "ava --watch --verbose"
+		"dev": "ava --watch --verbose",
+		"report-coverage": "nyc report --reporter=text-lcov | coveralls"
 	},
 	"devDependencies": {
 		"ava": "^0.25.0",
+		"coveralls": "^3.0.2",
 		"nyc": "^13.1.0"
 	},
 	"nyc": {
