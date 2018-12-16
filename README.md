@@ -23,7 +23,7 @@ npm i @phylum/pipeline
 
 # Documentation
 + [Pipeline](#class-pipeline)
-	+ [new Pipeline(entry, &#91;options&#93;)](#new-pipelineentry-options)
+	+ [new Pipeline(entry&#91;, options&#93;)](#new-pipelineentry-options)
 	+ [pipeline.data](#pipelinedata)
 	+ [pipeline.isEnabled](#pipelineisenabled)
 	+ [pipeline.enable()](#pipelineenable)
@@ -60,7 +60,7 @@ The pipeline class runs tasks and manages their states.
 import Pipeline from '@phylum/pipeline'
 ```
 
-### new Pipeline(entry, [options])
+### new Pipeline(entry[, options])
 Create a new pipeline instance.
 ```js
 const pipeline = new Pipeline(entry)
