@@ -23,7 +23,7 @@ npm i @phylum/pipeline
 
 # Documentation
 + [Pipeline](#class-pipeline)
-	+ [new Pipeline(entry, &#91;options&#93;)](#new-pipelineentry-options)
+	+ [new Pipeline(entry&#91;, options&#93;)](#new-pipelineentry-options)
 	+ [pipeline.data](#pipelinedata)
 	+ [pipeline.isEnabled](#pipelineisenabled)
 	+ [pipeline.enable()](#pipelineenable)
@@ -60,7 +60,7 @@ The pipeline class runs tasks and manages their states.
 import Pipeline from '@phylum/pipeline'
 ```
 
-### new Pipeline(entry, [options])
+### new Pipeline(entry[, options])
 Create a new pipeline instance.
 ```js
 const pipeline = new Pipeline(entry)
@@ -276,6 +276,8 @@ const webpack = require('webpack')
 
 async function bundleServer(ctx) {
 	const compiler = webpack({
+		target: 'node',
+		mode: ctx.pipeline.data.dev ? 'development' : 'production',
 		entry: {index: './server.js'}
 		output: {
 			path: path.join(__dirname, 'dist'),
@@ -396,7 +398,8 @@ const pipeline = new Pipeline(async ctx => {
 // Parse command line args:
 Object.assign(pipeline.data, parse([
 	{name: 'watch', type: Boolean},
-	{name: 'run', type: Boolean}
+	{name: 'run', type: Boolean},
+	{name: 'dev', type: Boolean}
 ]))
 
 // Handle errors and start the pipeline:
