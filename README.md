@@ -8,13 +8,21 @@ A flexible async task runner
 ## Concepts
 To easily combine processes like webpack builds and application packaging in a way that fits both development and production, these processes are organized in atomic tasks that can use other tasks as dependencies. Tasks can push updates (like new stats from webpack in watch mode) to their dependents. Updates can be handled manually or tasks are re-executed automatically.
 
-<br/>
-
-
-
-# Installation
+## Installation
 ```bash
 npm i @phylum/pipeline
+```
+
+<br/>
+
+# Quick Start
+The following is a very basic node module implementing a pipeline based cli.<br/>
+*For more advanced usage, refer to the [documentation](#documentation) below.*
+```js
+require('@phylum/pipeline').cli(async ctx => {
+	// Include tasks using:
+	await ctx.use(task)
+})
 ```
 
 ### Official Packages
