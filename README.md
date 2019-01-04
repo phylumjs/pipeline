@@ -19,10 +19,17 @@ npm i @phylum/pipeline
 The following is a very basic node module implementing a pipeline based cli.<br/>
 *For more advanced usage, refer to the [documentation](#documentation) below.*
 ```js
+#!/usr/bin/env node
+'use strict'
+
 require('@phylum/pipeline').cli(async ctx => {
 	// Include tasks using:
 	await ctx.use(task)
 })
+```
+```bash
+# Run the cli module (example.js):
+node example
 ```
 
 ### Official Packages
