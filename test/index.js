@@ -21,14 +21,14 @@ test('use', async t => {
 
 test('use (from disposed context)', async t => {
 	async function foo() {}
-	await t.throws(new Pipeline(async ctx => {
+	await t.throwsAsync(new Pipeline(async ctx => {
 		ctx.dispose(true)
 		ctx.use(foo)
 	}).enable())
 })
 
 test('use (api assertions)', async t => {
-	await t.throws(new Pipeline(async ctx => {
+	await t.throwsAsync(new Pipeline(async ctx => {
 		ctx.use('foo')
 	}).enable())
 })
@@ -37,17 +37,17 @@ test('sync handlers', async t => {
 	t.is(await new Pipeline(ctx => {
 		return 'foo'
 	}).enable(), 'foo')
-	t.is(await t.throws(new Pipeline(ctx => {
-		throw 'foo'
-	}).enable()), 'foo')
+	await t.throwsAsync(new Pipeline(ctx => {
+		throw new Error('foo')
+	}).enable(), 'foo')
 	t.is(await new Pipeline(async ctx => {
 		return ctx.use(() => 'foo')
 	}).enable(), 'foo')
-	t.is(await t.throws(new Pipeline(async ctx => {
+	await t.throwsAsync(new Pipeline(async ctx => {
 		await ctx.use(() => {
-			throw 'foo'
+			throw new Error('foo')
 		})
-	}).enable()), 'foo')
+	}).enable(), 'foo')
 })
 
 test('push, dispose', async t => {
@@ -135,7 +135,7 @@ test('push, pullImmediate', async t => {
 test('pull (api assertions)', async t => {
 	async function foo() {}
 	function throws(cb) {
-		return t.throws(new Pipeline(async ctx => {
+		return t.throwsAsync(new Pipeline(async ctx => {
 			return cb(ctx)
 		}).enable())
 	}
