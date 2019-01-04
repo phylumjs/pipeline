@@ -404,7 +404,7 @@ const bundleServer = require('./bundle-server')
 const runServer = require('./run-server')
 
 function commandLineArgs(ctx) {
-	Object.assign(pipeline.data, parse([
+	Object.assign(ctx.pipeline.data, parse([
 		{name: 'watch', type: Boolean},
 		{name: 'run', type: Boolean},
 		{name: 'dev', type: Boolean}
