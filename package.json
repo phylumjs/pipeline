@@ -19,6 +19,11 @@
 			"text-summary"
 		]
 	},
+	"ava": {
+		"files": [
+			"test/*.js"
+		]
+	},
 	"repository": "github:phylumjs/pipeline",
 	"author": "Max J. Polster",
 	"license": "MIT"
