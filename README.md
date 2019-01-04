@@ -29,6 +29,7 @@ npm i @phylum/pipeline
 	+ [pipeline.enable()](#pipelineenable)
 	+ [pipeline.disable()](#pipelinedisable)
 	+ [pipeline.disposeUnused()](#pipelinedisposeunused)
+	+ [pipeline.cli(&#91;options&#93;)](#pipelineclioptions)
 	+ [Event: 'resolve'](#event-resolve)
 	+ [Event: 'reject'](#event-reject)
 	+ [Event: 'dispose-error'](#event-dispose-error)
@@ -97,6 +98,21 @@ Manually dispose unused tasks.<br/>
 await pipeline.disposeUnused()
 ```
 + returns `<Promise>` - A promise that resolves when all tasks have been disposed.
+
+### pipeline.cli([options])
+Utility for implementing a simple cli that runs this pipeline.
++ The pipeline will be disabled when the process receives a 'SIGINT'.
++ The process will exit with code..
+	+ ..**0** - if the pipeline resolved and the event loop is empty.
+	+ ..**1** - if the pipeline rejected and the event loop is empty.
+	+ ..**1** - if an unhandled rejection occurs.
+	+ ..**1** - if the process receives a 'SIGINT' while the pipeline is disabled.
+
+```js
+pipeline.cli({module})
+```
++ options `<object>` - An object with the following options:
+	+ module `<Module>` - Optional. If specified and the module is not the main module, the pipeline will be exported by that module instead of running it.
 
 ### Event: 'resolve'
 The *resolve* event is emitted when the entry task resolves.
@@ -387,34 +403,24 @@ const parse = require('command-line-args')
 const bundleServer = require('./bundle-server')
 const runServer = require('./run-server')
 
-const pipeline = new Pipeline(async ctx => {
+function commandLineArgs(ctx) {
+	Object.assign(pipeline.data, parse([
+		{name: 'watch', type: Boolean},
+		{name: 'run', type: Boolean},
+		{name: 'dev', type: Boolean}
+	]))
+}
+
+new Pipeline(async ctx => {
+	// Parse command line args once:
+	await ctx.use(commandLineArgs)
+
 	// Include bundleServer and runServer tasks:
 	await Promise.all([
 		ctx.use(bundleServer),
 		ctx.use(runServer)
 	])
-})
-
-// Parse command line args:
-Object.assign(pipeline.data, parse([
-	{name: 'watch', type: Boolean},
-	{name: 'run', type: Boolean},
-	{name: 'dev', type: Boolean}
-]))
-
-// Handle errors and start the pipeline:
-pipeline.on('reject', err => {
-	console.error(err)
-})
-pipeline.enable()
-
-process.on('SIGINT', () => {
-	if (pipeline.isEnabled) {
-		pipeline.disable()
-	} else {
-		process.exit()
-	}
-})
+}).cli({module})
 ```
 The cli will be able to do the following:
 
@@ -424,3 +430,8 @@ The cli will be able to do the following:
 | `node cli --watch` | Compile and watch for changes |
 | `node cli --run` | Compile and run |
 | `node cli --watch --run` | Compile, run and watch for changes |
+
+```js
+// The cli module can also be required to get the pipeline:
+const pipeline = require('./cli')
+```
