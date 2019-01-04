@@ -37,6 +37,7 @@ npm i @phylum/pipeline
 	+ [pipeline.disable()](#pipelinedisable)
 	+ [pipeline.disposeUnused()](#pipelinedisposeunused)
 	+ [pipeline.cli(&#91;options&#93;)](#pipelineclioptions)
+	+ [Pipeline.cli(&#91;options, &#93;entry)](#pipelineclientry-options)
 	+ [Event: 'resolve'](#event-resolve)
 	+ [Event: 'reject'](#event-reject)
 	+ [Event: 'dispose-error'](#event-dispose-error)
@@ -120,6 +121,18 @@ pipeline.cli({module})
 ```
 + options `<object>` - An object with the following options:
 	+ module `<Module>` - Optional. If specified and the module is not the main module, the pipeline will be exported by that module instead of running it.
+
+### Pipeline.cli([options, ]entry)
+Shorthand for creating a new pipeline and calling `.cli(..)` on it.
+```js
+const {cli} = require('@phylum/pipeline')
+
+cli({module}, async ctx => {
+	console.log('Hello World!')
+})
+```
++ options `<object>` - Optional. An object with options passed to the pipeline and the cli function.
++ entry `<function>` - The pipeline entry.
 
 ### Event: 'resolve'
 The *resolve* event is emitted when the entry task resolves.
@@ -406,10 +419,13 @@ The following code shows how you could build a simple cli that uses the first tw
 #!/usr/bin/env node
 'use strict'
 
+const {cli} = require('@phylum/pipeline')
 const parse = require('command-line-args')
 const bundleServer = require('./bundle-server')
 const runServer = require('./run-server')
 
+// Task for parsing command line arguments that
+// are used by the bundleServer and runServer tasks:
 function commandLineArgs(ctx) {
 	Object.assign(ctx.pipeline.data, parse([
 		{name: 'watch', type: Boolean},
@@ -418,7 +434,7 @@ function commandLineArgs(ctx) {
 	]))
 }
 
-new Pipeline(async ctx => {
+cli({module}, async ctx => {
 	// Parse command line args once:
 	await ctx.use(commandLineArgs)
 
@@ -427,7 +443,7 @@ new Pipeline(async ctx => {
 		ctx.use(bundleServer),
 		ctx.use(runServer)
 	])
-}).cli({module})
+})
 ```
 The cli will be able to do the following:
 
