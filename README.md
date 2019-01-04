@@ -17,6 +17,13 @@ To easily combine processes like webpack builds and application packaging in a w
 npm i @phylum/pipeline
 ```
 
+### Official Packages
+
+| Package | Purpose |
+|-|-|
+| [webpack-task](https://github.com/phylumjs/webpack-task) | Task for integrating webpack |
+| [process-task](https://github.com/phylumjs/process-task) | Utility for implementing tasks that run child processes. |
+
 <br/>
 
 
