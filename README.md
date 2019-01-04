@@ -37,7 +37,7 @@ npm i @phylum/pipeline
 	+ [pipeline.disable()](#pipelinedisable)
 	+ [pipeline.disposeUnused()](#pipelinedisposeunused)
 	+ [pipeline.cli(&#91;options&#93;)](#pipelineclioptions)
-	+ [Pipeline.cli(&#91;options, &#93;entry)](#pipelineclientry-options)
+	+ [Pipeline.cli(&#91;options, &#93;entry)](#pipelineclioptions-entry)
 	+ [Event: 'resolve'](#event-resolve)
 	+ [Event: 'reject'](#event-reject)
 	+ [Event: 'dispose-error'](#event-dispose-error)
