@@ -301,6 +301,27 @@ test('await context disposals', async t => {
 	t.true(isReady)
 })
 
+test('await context disposal (promise executor)', async t => {
+	let disposed = false
+	const pipeline = new Pipeline(async ctx => {
+		ctx.on('dispose', addDisposal => {
+			addDisposal((resolve, reject) => {
+				t.is(typeof resolve, 'function')
+				t.is(typeof reject, 'function')
+				setTimeout(() => {
+					disposed = true
+					resolve()
+				}, 50)
+			})
+		})
+	})
+	await pipeline.enable()
+	const disposal = pipeline.disable()
+	t.false(disposed)
+	await disposal
+	t.true(disposed)
+})
+
 test('add multiple (and non-) disposals', async t => {
 	let resolved = 0
 	const pipeline = new Pipeline(async ctx => {
