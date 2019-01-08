@@ -50,6 +50,21 @@ test('sync handlers', async t => {
 	}).enable(), 'foo')
 })
 
+test('get context', async t => {
+	let fooCtx, barCtx
+	async function bar(ctx) {
+		barCtx = ctx
+	}
+	async function foo(ctx) {
+		fooCtx = ctx
+		await ctx.use(bar)
+	}
+	const pipeline = new Pipeline(foo)
+	await pipeline.enable()
+	t.is(pipeline.getContext(foo), fooCtx)
+	t.is(pipeline.getContext(bar), barCtx)
+})
+
 test('push, dispose', async t => {
 	let entryCalled = 0
 	let entryDisposed = 0
