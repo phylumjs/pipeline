@@ -8,6 +8,12 @@ test('pipeline (api assertions)', t => {
 	t.throws(() => new Pipeline(() => {}, 'bar'))
 })
 
+test('exports', async t => {
+	await new Pipeline(async ctx => {
+		t.true(ctx.exports && typeof ctx.exports === 'object')
+	}).enable()
+})
+
 test('use', async t => {
 	async function foo(ctx) {
 		return 'bar'
