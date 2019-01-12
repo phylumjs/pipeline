@@ -39,6 +39,18 @@ test('use (api assertions)', async t => {
 	}).enable())
 })
 
+test('use context', async t => {
+	let fooCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+		return 'bar'
+	}
+	await new Pipeline(async ctx => {
+		await ctx.use(foo)
+		t.is(await ctx.use(fooCtx), 'bar')
+	}).enable()
+})
+
 test('sync handlers', async t => {
 	t.is(await new Pipeline(ctx => {
 		return 'foo'
@@ -69,6 +81,10 @@ test('get context', async t => {
 	await pipeline.enable()
 	t.is(pipeline.getContext(foo), fooCtx)
 	t.is(pipeline.getContext(bar), barCtx)
+	t.is(pipeline.getContext(fooCtx), fooCtx)
+	t.is(pipeline.getContext(null), null)
+	t.throws(() => pipeline.getContext(undefined))
+	t.throws(() => pipeline.getContext(42))
 })
 
 test('push, dispose', async t => {
@@ -79,7 +95,9 @@ test('push, dispose', async t => {
 		return false
 	}
 	const pipeline = new Pipeline(async ctx => {
+		t.false(ctx.isDisposed)
 		ctx.on('dispose', () => {
+			t.true(ctx.isDisposed)
 			entryDisposed++
 		})
 		entryCalled++
@@ -184,6 +202,32 @@ test('pull (from disposed context)', async t => {
 	}).enable()
 })
 
+test('pull context', async t => {
+	let fooCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+	}
+	await new Pipeline(async ctx => {
+		await ctx.use(foo)
+		t.false(ctx.isPulling(foo))
+		t.false(ctx.isPulling(fooCtx))
+		t.true(ctx.pull(fooCtx, () => {}))
+		t.true(ctx.isPulling(foo))
+		t.true(ctx.isPulling(fooCtx))
+	}).enable()
+})
+
+test('pullImmediate context', async t => {
+	let fooCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+	}
+	await new Pipeline(async ctx => {
+		await ctx.use(foo)
+		t.true(ctx.pullImmediate(fooCtx, () => {}))
+	}).enable()
+})
+
 test('drop', async t => {
 	let resolvePushed
 	let pushed = new Promise(resolve => {
@@ -212,8 +256,44 @@ test('drop non dependency', async t => {
 	async function foo() {}
 	await new Pipeline(async ctx => {
 		ctx.drop(foo)
-		t.pass()
+		t.false(ctx.isDependency(foo))
 	}).enable()
+})
+
+test('drop context', async t => {
+	let fooCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+	}
+	await new Pipeline(async ctx => {
+		await ctx.use(foo)
+		ctx.drop(fooCtx)
+		t.false(ctx.isDependency(foo))
+	}).enable()
+})
+
+test('drop (api assertions)', async t => {
+	await new Pipeline(async ctx => {
+		t.throws(() => ctx.drop(42))
+	}).enable()
+})
+
+test('dependency tests', async t => {
+	let fooCtx, barCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+		t.true(ctx.isDependent(bar))
+		t.true(ctx.isDependent(barCtx))
+		t.false(ctx.isDependent(null))
+	}
+	async function bar(ctx) {
+		barCtx = ctx
+		t.false(ctx.isDependency(foo))
+		await ctx.use(foo)
+		t.true(ctx.isDependency(foo))
+		t.true(ctx.isDependency(fooCtx))
+	}
+	await new Pipeline(bar).enable()
 })
 
 test('dispose', async t => {
