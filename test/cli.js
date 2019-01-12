@@ -11,6 +11,13 @@ test('run', async t => {
 	t.is(res.exitCode, 0)
 })
 
+test('unresolved promise', async t => {
+	const res = await exec('unresolved-promise')
+	t.is(res.stdout, 'foo\n')
+	t.is(res.stderr, '')
+	t.is(res.exitCode, 1)
+})
+
 test('static api', async t => {
 	const res = await exec('static-api')
 	t.is(res.stdout, 'foo\n')
