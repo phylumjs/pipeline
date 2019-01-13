@@ -556,3 +556,41 @@ test('destroy unused manually', async t => {
 	await pipeline.disposeUnused()
 	t.true(fooDisposed)
 })
+
+test('dispose after pipeline', async t => {
+	let disposed
+	async function foo(ctx) {
+		disposed = false
+		ctx.disposeAfterPipeline = true
+		t.true(ctx.disposeAfterPipeline)
+		ctx.on('dispose', () => {
+			disposed = true
+		})
+	}
+	const pipeline = new Pipeline(async ctx => {
+		await ctx.use(foo)
+		t.false(disposed)
+	})
+	await pipeline.enable()
+	t.true(disposed)
+})
+
+test('dispose after pipeline (cancel)', async t => {
+	let disposed
+	async function foo(ctx) {
+		disposed = false
+		ctx.disposeAfterPipeline = true
+		t.true(ctx.disposeAfterPipeline)
+		ctx.disposeAfterPipeline = false
+		t.false(ctx.disposeAfterPipeline)
+		ctx.on('dispose', () => {
+			disposed = true
+		})
+	}
+	const pipeline = new Pipeline(async ctx => {
+		await ctx.use(foo)
+		t.false(disposed)
+	})
+	await pipeline.enable()
+	t.false(disposed)
+})
