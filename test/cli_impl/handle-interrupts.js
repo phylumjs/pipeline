@@ -5,15 +5,13 @@ const Pipeline = require('../..')
 const pipeline = new Pipeline(async ctx => {
 	const resource = setInterval(() => {}, 1000)
 
-	ctx.on('dispose', addDisposal => {
-		addDisposal(new Promise(resolve => {
-			setTimeout(() => {
-				console.log('bar')
-				clearInterval(resource)
-				resolve()
-			}, 100)
-		}))
-	})
+	ctx.on('dispose', () => new Promise(resolve => {
+		setTimeout(() => {
+			console.log('bar')
+			clearInterval(resource)
+			resolve()
+		}, 100)
+	}))
 
 	console.log('foo')
 	process.send('ready')
