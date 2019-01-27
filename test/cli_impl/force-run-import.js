@@ -1,6 +1,6 @@
 'use strict'
 
-const Pipeline = require('../..')
+const {Pipeline} = require('../..')
 const pipeline = require('./force-run')
 
 setImmediate(() => {

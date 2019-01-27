@@ -1,6 +1,6 @@
 'use strict'
 
-const Pipeline = require('../..')
+const {Pipeline} = require('../..')
 
 new Pipeline(async ctx => {
 	new Promise((resolve, reject) => {

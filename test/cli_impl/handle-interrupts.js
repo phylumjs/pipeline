@@ -1,6 +1,6 @@
 'use strict'
 
-const Pipeline = require('../..')
+const {Pipeline} = require('../..')
 
 const pipeline = new Pipeline(async ctx => {
 	const resource = setInterval(() => {}, 1000)

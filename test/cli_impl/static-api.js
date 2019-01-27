@@ -2,6 +2,6 @@
 
 const {cli} = require('../..')
 
-cli({module}, async ctx => {
+cli(async ctx => {
 	console.log('foo')
-})
+}, {module})

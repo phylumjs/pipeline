@@ -1,7 +1,7 @@
 'use strict'
 
 const test = require('ava')
-const Pipeline = require('..')
+const {Pipeline} = require('..')
 
 test('use', async t => {
 	async function foo(ctx) {

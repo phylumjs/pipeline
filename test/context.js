@@ -1,7 +1,7 @@
 'use strict'
 
 const test = require('ava')
-const Pipeline = require('..')
+const {Pipeline} = require('..')
 
 test('exports', async t => {
 	await new Pipeline(async ctx => {
