@@ -149,3 +149,50 @@ test('destroy unused manually', async t => {
 	await pipeline.disposeUnused()
 	t.true(fooDisposed)
 })
+
+test('expose entry context in event: "resolve"', async t => {
+	let sourceCtx
+	const pipeline = new Pipeline(async ctx => {
+		sourceCtx = ctx
+	})
+	await new Promise(resolve => {
+		pipeline.on('resolve', (_, ctx) => {
+			t.is(ctx, sourceCtx)
+			resolve()
+		})
+		pipeline.enable()
+	})
+})
+
+test('expose entry context in event: "reject"', async t => {
+	let sourceCtx
+	const pipeline = new Pipeline(async ctx => {
+		sourceCtx = ctx
+		throw new Error('foo')
+	})
+	await new Promise(resolve => {
+		pipeline.on('reject', (_, ctx) => {
+			t.is(ctx, sourceCtx)
+			resolve()
+		})
+		pipeline.enable()
+	})
+})
+
+test('expose causing context in event: "dispose-error"', async t => {
+	let sourceCtx
+	const pipeline = new Pipeline(async ctx => {
+		sourceCtx = ctx
+		ctx.on('dispose', async () => {
+			throw new Error('foo')
+		})
+	})
+	await pipeline.enable()
+	await new Promise(resolve => {
+		pipeline.on('dispose-error', (err, ctx) => {
+			t.is(ctx, sourceCtx)
+			resolve()
+		})
+		pipeline.disable()
+	})
+})

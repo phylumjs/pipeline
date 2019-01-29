@@ -143,3 +143,43 @@ test('pull (from disposed context)', async t => {
 		t.false(ctx.pullImmediate(foo, () => {}))
 	}).enable()
 })
+
+test('expose dependency context in update handler', async t => {
+	let fooCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+		ctx.push('bar')
+		return 'foo'
+	}
+	const pipeline = new Pipeline(async ctx => {
+		await new Promise((resolve, reject) => {
+			ctx.pull(foo, (state, ctx) => {
+				state.then(value => {
+					t.is(value, 'bar')
+					t.is(ctx, fooCtx)
+					resolve()
+				}, reject)
+			})
+			ctx.use(foo).then(value => {
+				t.is(value, 'foo')
+			}, reject)
+		})
+	})
+	await pipeline.enable()
+})
+
+test('expose dependency context in immediate update handler', async t => {
+	let fooCtx
+	async function foo(ctx) {
+		fooCtx = ctx
+	}
+	const pipeline = new Pipeline(async ctx => {
+		await new Promise(resolve => {
+			ctx.pullImmediate(foo, (_, ctx) => {
+				t.is(ctx, fooCtx)
+				resolve()
+			})
+		})
+	})
+	await pipeline.enable()
+})
