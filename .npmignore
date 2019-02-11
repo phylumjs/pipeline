@@ -1,0 +1,5 @@
+/dist/test
+/.nyc_output
+/tsconfig*
+/test
+/*.tgz
