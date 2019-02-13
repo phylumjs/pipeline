@@ -13,6 +13,11 @@
 		"test:watch": "npm run compile:node && concurrently -n tsc,ava \"tsc -w -p tsconfig-node.json\" \"ava -w -v\"",
 		"prepack": "npm run test && npm run compile"
 	},
+	"ava": {
+		"files": [
+			"test/*.js"
+		]
+	},
 	"dependencies": {},
 	"devDependencies": {
 		"@babel/preset-env": "^7.3.1",
