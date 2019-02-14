@@ -1,6 +1,5 @@
 
-export * from './event-aggregator'
+export * from './events'
 export * from './pipeline'
-export * from './state-bag'
-export * from './state-queue'
+export * from './states'
 export * from './task'

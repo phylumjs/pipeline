@@ -1,8 +1,9 @@
+// @ts-check
 'use strict'
 
 import test from 'ava'
 import ticks from './util/ticks'
-import { StateBag } from '../dist/node'
+import { StateBag } from '..'
 
 test('overlap', async t => {
 	const bag = new StateBag()
