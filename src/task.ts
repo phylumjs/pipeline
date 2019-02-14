@@ -7,7 +7,7 @@ import { StateBag, StateQueue } from './states'
  * Base class for asynchronous tasks. A task is also an {@link EventTarget} and can be attached to a {@link Pipeline} or any other {@link EventAggregator}.
  * @template T The output type.
  */
-export abstract class Task<T> extends EventTarget {
+export abstract class Task<T = void> extends EventTarget {
 	private _started: Promise<void>
 	private _activity = new StateBag()
 	private _output = new StateQueue<T>()
