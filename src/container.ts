@@ -1,6 +1,6 @@
 
 export interface ContainerItemType<T> {
-	new(): T
+	new(...args: any[]): T
 	createInstanceFor?(container: Container): T
 }
 
