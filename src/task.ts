@@ -29,6 +29,7 @@ export abstract class Task<T = void> extends EventTarget {
 
 	/**
 	 * Push task output.
+	 * If the task output is not used by a consumer,
 	 * @param {T | Promise<T>} output The task output. If this is a promise, it will be registered as activity too.
 	 */
 	protected push(output: T | Promise<T>) {
@@ -37,7 +38,7 @@ export abstract class Task<T = void> extends EventTarget {
 		} else {
 			output = Promise.resolve(output)
 		}
-		this._output.append(output)
+		this._output.append(output).catch(() => {})
 		Array.from(this._consumers).forEach(consumer => {
 			consumer(this._output.latest)
 		})
