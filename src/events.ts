@@ -3,7 +3,7 @@
  * A simple pub/sub system for events.
  */
 export class EventAggregator {
-	private _channels: Map<EventChannel<any>, Map<EventListener<any>, EventSubscription>> = new Map()
+	private _eventChannels: Map<EventChannel<any>, Set<EventListener<any>>> = new Map();
 
 	/**
 	 * Publish an event.
@@ -11,9 +11,9 @@ export class EventAggregator {
 	 * @template E The event type.
 	 */
 	public publish<E extends Event>(event: E) {
-		const subscriptions = this._channels.get(event.channel)
+		const subscriptions = this._eventChannels.get(event.channel);
 		if (subscriptions) {
-			Array.from(subscriptions.keys()).forEach(listener => listener(event))
+			Array.from(subscriptions.keys()).forEach(listener => listener(event));
 		}
 	}
 
@@ -23,7 +23,7 @@ export class EventAggregator {
 	 * @template E The event type.
 	 */
 	public hasListeners<E extends Event>(channel: EventChannel<E>) {
-		return this._channels.has(channel)
+		return this._eventChannels.has(channel);
 	}
 
 	/**
@@ -34,43 +34,38 @@ export class EventAggregator {
 	 * @template E The event type.
 	 */
 	public subscribe<E extends Event>(channel: EventChannel<E>, listener: EventListener<E>) {
-		let listeners = this._channels.get(channel)
+		let listeners = this._eventChannels.get(channel);
 		if (!listeners) {
-			this._channels.set(channel, listeners = new Map())
+			this._eventChannels.set(channel, listeners = new Set());
 		}
-		let subscription = listeners.get(listener)
-		if (!subscription) {
-			listeners.set(listener, subscription = {
-				dispose: () => {
-					const listeners = this._channels.get(channel)
-					if (listeners) {
-						listeners.delete(listener)
-						if (listeners.size === 0) {
-							this._channels.delete(channel)
-						}
-					}
+		listeners.add(listener);
+		return () => {
+			listeners = this._eventChannels.get(channel);
+			if (listeners) {
+				listeners.delete(listener);
+				if (listeners.size === 0) {
+					this._eventChannels.delete(channel);
 				}
-			})
-		}
-		return subscription
+			}
+		};
 	}
 
 	/**
 	 * Attach this event aggregator to an event target.
-	 * @param {EventTarget} target The event target.
+	 * @param {EventClient} client The event target.
 	 */
-	public attach(target: EventTarget) {
-		target.attach(this)
-		return this
+	public attach(client: EventClient) {
+		client.attach(this);
+		return this;
 	}
 
 	/**
 	 * Attach this event aggregator to an event target.
-	 * @param {EventTarget} target The event target.
+	 * @param {EventClient} client The event target.
 	 */
-	public detach(target: EventTarget) {
-		target.detach(this)
-		return this
+	public detach(client: EventClient) {
+		client.detach(this);
+		return this;
 	}
 }
 
@@ -81,37 +76,33 @@ export interface Event {
 	/**
 	 * The channel, this event is published on.
 	 */
-	channel: any
+	channel: any;
 }
 
 /**
  * Extract the channel type from an event type.
  * @template E The event type.
  */
-export type EventChannel<E extends Event> = E extends {channel: infer C} ? C : unknown
+export type EventChannel<E extends Event> = E extends {channel: infer C} ? C : never;
 
 /**
  * An event listener.
  * @param {E} event The event that was published.
  * @template E The event type.
  */
-export type EventListener<E extends Event> = (event: E) => void
+export type EventListener<E extends Event> = (event: E) => void;
 
 /**
  * Represents an event subscription.
+ * Call this function to unsubscribe the event listener associated with this subscription.
  */
-export interface EventSubscription {
-	/**
-	 * Unsubscribe the event listener associated with this subscription.
-	 */
-	dispose(): void
-}
+export type EventSubscription = () => void;
 
 /**
  * An object that can be attached to multiple event aggregators to subscribe to or publish events.
  */
-export class EventTarget {
-	private _eas: Map<EventAggregator, Set<EventSubscription>> = new Map()
+export class EventClient {
+	private _eas: Map<EventAggregator, Set<EventSubscription>> = new Map();
 
 	/**
 	 * Attach an event aggregator.
@@ -119,9 +110,9 @@ export class EventTarget {
 	 */
 	public attach(ea: EventAggregator) {
 		if (!this._eas.has(ea)) {
-			this._eas.set(ea, new Set(this.subscribe(ea)))
+			this._eas.set(ea, new Set(this.subscribe(ea)));
 		}
-		return this
+		return this;
 	}
 
 	/**
@@ -129,14 +120,14 @@ export class EventTarget {
 	 * @param {EventAggregator} ea The event aggregator.
 	 */
 	public detach(ea: EventAggregator) {
-		const subscriptions = this._eas.get(ea)
+		const subscriptions = this._eas.get(ea);
 		if (subscriptions) {
-			for (const subscription of subscriptions) {
-				subscription.dispose()
+			for (const dispose of subscriptions) {
+				dispose();
 			}
-			this._eas.delete(ea)
+			this._eas.delete(ea);
 		}
-		return this
+		return this;
 	}
 
 	/**
@@ -153,7 +144,7 @@ export class EventTarget {
 	 * @template E The event type.
 	 */
 	protected publish<E extends Event>(event: E) {
-		Array.from(this._eas.keys()).forEach(ea => ea.publish<E>(event))
+		Array.from(this._eas.keys()).forEach(ea => ea.publish<E>(event));
 	}
 
 	/**
@@ -164,9 +155,9 @@ export class EventTarget {
 	protected hasListeners<E extends Event>(channel: EventChannel<E>) {
 		for (const ea of this._eas.keys()) {
 			if (ea.hasListeners(channel)) {
-				return true
+				return true;
 			}
 		}
-		return false
+		return false;
 	}
 }

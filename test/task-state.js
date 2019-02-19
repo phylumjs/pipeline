@@ -1,90 +1,62 @@
-'use strict'
+// @ts-check
+'use strict';
 
-import test from 'ava'
-import ticks from './util/ticks'
-import { Task } from '..'
+import test from 'ava';
+import ticks from './util/ticks';
+import { Task } from '..';
 
-test('start/stop', async t => {
-	const task = new class extends Task {
-		run() {}
-	}
-	t.false(task.started)
-	task.start()
-	t.true(task.started)
-	task.stop()
-	t.false(task.started)
-})
+test('isActive', async t => {
+    const task = new class extends Task {
+        async run() {}
+    };
+    t.false(task.isActive);
+    task.activate();
+    t.true(task.isActive);
+    task.deactivate();
+    t.false(task.isActive);
+});
 
 test('reset', async t => {
-	const task = new class extends Task {
-		run() {}
-		dispose() {
-			t.pass()
-		}
-	}
-	await task.start()
-	t.true(await task.reset())
-})
+    let mayRun = false;
+    const task = new class extends Task {
+        async run() {
+            t.true(mayRun);
+        }
+    };
+    t.false(await task.reset());
+    mayRun = true;
+    await task.activate();
+    t.true(await task.reset());
+    mayRun = false;
+});
 
-test('reset while stopped', async t => {
-	const task = new class extends Task {
-		run() {
-			t.fail()
-		}
-		dispose() {
-			t.fail()
-		}
-	}
-	t.false(await task.reset())
-})
+test('dispose', async t => {
+    let disposed = false;
+    const task = new class extends Task {
+        run() {
+            this.dispose(async () => {
+                await ticks(1);
+                disposed = true;
+            });
+        }
+    };
+    await task.activate();
+    await task.deactivate();
+    t.true(disposed);
+});
 
-test('run delays activity', async t => {
-	let done = false
-	const task = new class extends Task {
-		async run() {
-			await ticks(4)
-			done = true
-		}
-	}
-	await task.start()
-	await task.done()
-	t.true(done)
-})
-
-test('dispose delays activity', async t => {
-	let disposed = false
-	const task = new class extends Task {
-		run() {}
-		async dispose() {
-			await ticks(4)
-			disposed = true
-		}
-	}
-	await task.start()
-	task.stop()
-	await task.done()
-	t.true(disposed)
-})
-
-test('activity delays start', async t => {
-	let mayRun = false
-	let runCalled = false
-	const task = new class extends Task {
-		run() {
-			t.true(mayRun)
-			runCalled = true
-		}
-	}
-	task.activity(ticks(4).then(() => {
-		t.false(runCalled)
-		mayRun = true
-	}))
-	task.start().then(() => {
-		t.true(runCalled)
-	})
-	task.start().then(() => {
-		t.true(runCalled)
-	})
-	await task.done()
-	t.true(runCalled)
-})
+test('unbind dispose', async t => {
+    let disposed = false;
+    const task = new class extends Task {
+        run() {
+            const disposeBinding = this.dispose(async () => {
+                await ticks(1);
+                disposed = true;
+            });
+            disposeBinding();
+        }
+    };
+    await task.activate();
+    await task.deactivate();
+    t.false(disposed);
+});

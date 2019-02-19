@@ -1,33 +1,39 @@
 // @ts-check
-'use strict'
+'use strict';
 
-import test from 'ava'
-import { Task, Pipeline } from '..'
+import test from 'ava';
+import ticks from './util/ticks';
+import { Task } from '..';
 
-test('use', async t => {
-	const values = []
+test('use task', async t => {
+    const foo = new class extends Task {
+        run() {
+            this.push('foo');
+            this.push('bar');
+        }
+    };
+    const output = [];
+    const bar = new class extends Task {
+        async run() {
+            output.push(await this.use(foo));
+        }
+    };
+    await bar.activate();
+    await ticks(1);
+    t.deepEqual(output, ['foo', 'bar']);
+});
 
-	const foo = new class extends Task {
-		run() {
-			this.activity(new Promise(resolve => {
-				this.push('foo')
-				this.push('bar')
-				resolve()
-			}))
-		}
-	}
-
-	const bar = new class extends Task {
-		async run() {
-			values.push(await this.use(foo))
-		}
-	}
-
-	await bar.start()
-	await new Pipeline()
-		.attach(foo)
-		.attach(bar)
-		.done()
-
-	t.deepEqual(values, ['foo', 'bar'])
-})
+test('use source', async t => {
+    const source = {
+        pipe: cb => {
+            cb(Promise.resolve('foo'));
+            return () => {};
+        }
+    };
+    const foo = new class extends Task {
+        async run() {
+            t.is(await this.use(source), 'foo');
+        }
+    };
+    await foo.activate();
+});

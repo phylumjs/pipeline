@@ -1,88 +1,79 @@
 // @ts-check
-'use strict'
+'use strict';
 
-import test from 'ava'
-import capture from './util/capture-task'
-import ticks from './util/ticks'
-import { Task } from '..'
+import test from 'ava';
+import capture from './util/capture';
+import ticks from './util/ticks';
+import { Task } from '..';
 
-test('run only', async t => {
-	const task = new class extends Task {
-		async run() {
-			return 'foo'
-		}
-	}
-	const output = capture(task)
-	task.start()
-	await task.done()
-	t.deepEqual(output, [{resolve: 'foo'}])
-})
+test('output order', async t => {
+    const task = new class extends Task {
+        async run() {
+            this.push(ticks(3).then(() => 'foo'));
+            await ticks(1);
+            this.push('bar');
+            return 'baz';
+        }
+    };
+    const output = capture(task);
+    await task.activate();
+    await ticks(4);
+    t.deepEqual(output, [{v: 'foo'}, {v: 'baz'}, {v: 'bar'}]);
+});
 
-test('push only', async t => {
-	const task = new class extends Task{
-		run() {
-			this.push('foo')
-		}
-	}
-	const output = capture(task)
-	task.start()
-	await task.done()
-	t.deepEqual(output, [{resolve: 'foo'}])
-})
+test('output latest', async t => {
+    const task = new class extends Task {
+        async run() {
+            return 'foo';
+        }
+    };
+    task.activate();
+    await ticks(2);
+    task.pipe(state => {
+        state.then(value => {
+            t.is(value, 'foo');
+        });
+    });
+});
 
-test('mixed', async t => {
-	const task = new class extends Task {
-		async run() {
-			this.push(ticks(2).then(() => 'baz'))
-			this.push('bar')
-			this.activity(ticks(4).then(() => {
-				this.push('later')
-			}))
-			return 'foo'
-		}
-	}
-	const output = capture(task)
-	await task.start()
-	await task.done()
-	t.deepEqual(output, [{resolve: 'baz'}, {resolve: 'bar'}, {resolve: 'foo'}, {resolve: 'later'}])
-})
+test('output uncaught exceptions', async t => {
+    const task = new class extends Task {
+        run() {
+            throw 'foo';
+        }
+    };
+    const output = capture(task);
+    await task.activate();
+    await ticks(1);
+    t.deepEqual(output, [{e: 'foo'}]);
+});
 
-test('run error handling', async t => {
-	const task = new class extends Task {
-		run() {
-			throw new Error('test')
-		}
-	}
-	const output = capture(task)
-	await task.start()
-	await task.done()
-	t.is(output.length, 1)
-	t.is(output[0].reject.message, 'test')
-})
+test('error shorthand', async t => {
+    const task = new class extends Task {
+        run() {
+            this.error('foo');
+        }
+    };
+    const output = capture(task);
+    await task.activate();
+    await ticks(1);
+    t.deepEqual(output, [{e: 'foo'}]);
+
+});
 
 test('unpipe', async t => {
-	const task = new class extends Task{
-		run() {
-			this.push('foo')
-			this.push('bar')
-		}
-	}
-	const binding = task.pipe(state => {
-		binding.dispose()
-		state.then(value => t.is(value, 'foo'))
-	})
-	await task.start()
-	await task.done()
-})
-
-test('pipe, push latest immediately', async t => {
-	const task = new class extends Task {
-		async run() {
-			return 'foo'
-		}
-	}
-	await task.start()
-	const output = capture(task)
-	await task.done()
-	t.deepEqual(output, [{resolve: 'foo'}])
-})
+    const task = new class extends Task {
+        run() {
+            this.push('foo');
+            this.push('bar');
+        }
+    };
+    const dispose = task.pipe(state => {
+        dispose();
+        state.then(value => {
+            t.is(value, 'foo');
+        });
+    });
+    task.activate();
+    await ticks(1);
+});
