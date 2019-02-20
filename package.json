@@ -27,6 +27,7 @@
 		"rimraf": "^2.6.3",
 		"typescript": "^3.3.3"
 	},
+	"repository": "github:phylumjs/pipeline",
 	"author": "Max J. Polster",
 	"license": "MIT"
 }
