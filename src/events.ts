@@ -3,7 +3,7 @@
  * A simple pub/sub system for events.
  */
 export class EventAggregator {
-	private _eventChannels: Map<EventChannel<any>, Set<EventListener<any>>> = new Map();
+	private readonly _eventChannels: Map<EventChannel<any>, Set<EventListener<any>>> = new Map();
 
 	/**
 	 * Publish an event.
@@ -102,15 +102,15 @@ export type EventSubscription = () => void;
  * An object that can be attached to multiple event aggregators to subscribe to or publish events.
  */
 export class EventClient {
-	private _eas: Map<EventAggregator, Set<EventSubscription>> = new Map();
+	private _eventAggregators: Map<EventAggregator, Set<EventSubscription>> = new Map();
 
 	/**
 	 * Attach an event aggregator.
 	 * @param {EventAggregator} ea The event aggregator.
 	 */
 	public attach(ea: EventAggregator) {
-		if (!this._eas.has(ea)) {
-			this._eas.set(ea, new Set(this.subscribe(ea)));
+		if (!this._eventAggregators.has(ea)) {
+			this._eventAggregators.set(ea, new Set(this.subscribe(ea)));
 		}
 		return this;
 	}
@@ -120,12 +120,12 @@ export class EventClient {
 	 * @param {EventAggregator} ea The event aggregator.
 	 */
 	public detach(ea: EventAggregator) {
-		const subscriptions = this._eas.get(ea);
+		const subscriptions = this._eventAggregators.get(ea);
 		if (subscriptions) {
 			for (const dispose of subscriptions) {
 				dispose();
 			}
-			this._eas.delete(ea);
+			this._eventAggregators.delete(ea);
 		}
 		return this;
 	}
@@ -144,7 +144,7 @@ export class EventClient {
 	 * @template E The event type.
 	 */
 	protected publish<E extends Event>(event: E) {
-		Array.from(this._eas.keys()).forEach(ea => ea.publish<E>(event));
+		Array.from(this._eventAggregators.keys()).forEach(ea => ea.publish<E>(event));
 	}
 
 	/**
@@ -153,7 +153,7 @@ export class EventClient {
 	 * @template E The event type.
 	 */
 	protected hasListeners<E extends Event>(channel: EventChannel<E>) {
-		for (const ea of this._eas.keys()) {
+		for (const ea of this._eventAggregators.keys()) {
 			if (ea.hasListeners(channel)) {
 				return true;
 			}

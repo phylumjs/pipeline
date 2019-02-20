@@ -3,12 +3,12 @@
 
 import test from 'ava';
 import ticks from './util/ticks';
-import { Task } from '..';
+import { Container, Task } from '..';
 
 test('isActive', async t => {
     const task = new class extends Task {
         async run() {}
-    };
+    }(new Container());
     t.false(task.isActive);
     task.activate();
     t.true(task.isActive);
@@ -22,7 +22,7 @@ test('reset', async t => {
         async run() {
             t.true(mayRun);
         }
-    };
+    }(new Container());
     t.false(await task.reset());
     mayRun = true;
     await task.activate();
@@ -39,7 +39,7 @@ test('dispose', async t => {
                 disposed = true;
             });
         }
-    };
+    }(new Container());
     await task.activate();
     await task.deactivate();
     t.true(disposed);
@@ -55,7 +55,7 @@ test('unbind dispose', async t => {
             });
             disposeBinding();
         }
-    };
+    }(new Container());
     await task.activate();
     await task.deactivate();
     t.false(disposed);

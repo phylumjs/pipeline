@@ -2,7 +2,7 @@
 'use strict';
 
 import test from 'ava';
-import { Task, TaskError, EventAggregator } from '..';
+import { Container, Task, TaskError, EventAggregator } from '..';
 
 test('dispose error', async t => {
     const task = new class extends Task {
@@ -11,7 +11,7 @@ test('dispose error', async t => {
                 throw 'foo';
             });
         }
-    };
+    }(new Container());
     const ea = new EventAggregator();
     ea.attach(task);
     ea.subscribe(TaskError, event => {

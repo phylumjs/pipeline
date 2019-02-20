@@ -1,5 +1,14 @@
 # Tasks
 
+## Containers
+Task instances should be obtained from a container.<br>
+To get started, you can use the same container for everything or [read more...](./containers.md)
+```ts
+import { Container } from '@phylum/pipeline';
+
+const container = new Container();
+```
+
 ## Basic Implementation
 Task behaviour is implemented with the `.run` function. If it returns a promise, that promise will be used as output.<br>
 The following task loads a json config file:
@@ -51,7 +60,7 @@ class GetMessage extends Task<string> {
 
 class LogMessage extends Task<void> {
     async run() {
-        const message = await this.use(new GetMessage());
+        const message = await this.use(container.get(GetMessage));
         console.log(message);
     }
 }
@@ -61,14 +70,13 @@ class LogMessage extends Task<void> {
 When a task implements it's own logic for handling output, this is called a **dynamic dependency**.<br>
 The following is an example of a task that handles multiple output of a `getLatestMessage` task without beeing reset:
 ```ts
-const getLatestMessage = createSomeTask();
-// getLatestMessage is a task that may emit multiple outputs over time.
+// GetLatestMessage is a task that may emit multiple outputs over time.
 
 class LogMessage extends Task<void> {
     run() {
         // Pipe every output of the 'getLatestMessage' task
         // to the callback that handles output states:
-        const binding = getLatestMessage.pipe(state => {
+        const binding = container.get(GetLatestMessage).pipe(state => {
             state.then(message => {
                 console.log(message);
             }).catch(error => {

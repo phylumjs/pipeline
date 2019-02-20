@@ -4,7 +4,7 @@
 import test from 'ava';
 import capture from './util/capture';
 import ticks from './util/ticks';
-import { Task } from '..';
+import { Container, Task } from '..';
 
 test('output order', async t => {
     const task = new class extends Task {
@@ -14,7 +14,7 @@ test('output order', async t => {
             this.push('bar');
             return 'baz';
         }
-    };
+    }(new Container());
     const output = capture(task);
     await task.activate();
     await ticks(4);
@@ -26,7 +26,7 @@ test('output latest', async t => {
         async run() {
             return 'foo';
         }
-    };
+    }(new Container());
     task.activate();
     await ticks(2);
     task.pipe(state => {
@@ -41,7 +41,7 @@ test('output uncaught exceptions', async t => {
         run() {
             throw 'foo';
         }
-    };
+    }(new Container());
     const output = capture(task);
     await task.activate();
     await ticks(1);
@@ -53,7 +53,7 @@ test('error shorthand', async t => {
         run() {
             this.error('foo');
         }
-    };
+    }(new Container());
     const output = capture(task);
     await task.activate();
     await ticks(1);
@@ -67,7 +67,7 @@ test('unpipe', async t => {
             this.push('foo');
             this.push('bar');
         }
-    };
+    }(new Container());
     const dispose = task.pipe(state => {
         dispose();
         state.then(value => {
