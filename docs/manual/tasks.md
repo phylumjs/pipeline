@@ -42,7 +42,7 @@ class ConfigLoader extends Task<any> {
         })
 
         // When the task is deactivated, close the watcher:
-        this.dispose(() => watcher.close());
+        this.disposable(() => watcher.close());
     }
 }
 ```
