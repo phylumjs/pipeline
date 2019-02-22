@@ -42,7 +42,12 @@ export class Container {
 	 * Check if this or a parent container has an instance.
 	 */
 	public has<T>(type: InstanceType<T>): boolean {
-		return this._containerInstances.has(type) || (Boolean(this.parentContainer) && this.parentContainer.has(type));
+		for (const container of this.containers()) {
+			if (container._containerInstances.has(type)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -59,12 +64,11 @@ export class Container {
 	 * @template T The instance type.
 	 */
 	public get<T>(type: InstanceType<T>): T {
-		let instance: T;
-		if (instance = this._containerInstances.get(type)) {
-			return instance;
-		}
-		if (this.parentContainer && (instance = this.parentContainer.get<T>(type))) {
-			return instance;
+		for (const container of this.containers()) {
+			const instance = container._containerInstances.get(type);
+			if (instance) {
+				return instance;
+			}
 		}
 		return this.use<T>(type);
 	}
@@ -76,11 +80,20 @@ export class Container {
 	 * @template T The instance type.
 	 */
 	public getOwn<T>(type: InstanceType<T>): T {
-		let instance: T;
-		if (instance = this._containerInstances.get(type)) {
+		const instance = this._containerInstances.get(type);
+		if (instance) {
 			return instance;
 		}
 		return this.use<T>(type);
+	}
+
+	/**
+	 * Get an iterable of this and all parent containers.
+	 */
+	public * containers(): Iterable<Container> {
+		for (let target: Container = this; target; target = target.parentContainer) {
+			yield target;
+		}
 	}
 
 	/**

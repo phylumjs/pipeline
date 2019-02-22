@@ -1,5 +1,6 @@
 
-import { Container } from './container';
+import { Container, InstanceType } from './container';
+import { Disposable, DisposeCallback } from './disposable';
 import { EventAggregator, EventClient, Event } from './events';
 import { Pipeline, PipelineActivateEvent, PipelineDeactivateEvent } from './pipeline';
 import { StateBag, StateQueue } from './states';
@@ -12,7 +13,7 @@ import { StateBag, StateQueue } from './states';
 export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	private _taskActive: Promise<void>;
 	private _taskPending = new StateBag();
-	private _taskDisposeCallbacks = new Set<TaskDisposeCallback>();
+	private _taskDisposables = new Set<Disposable>();
 	private _taskOutput = new StateQueue<T>();
 	private _taskOutputCallbacks = new Set<TaskOutputCallback<T>>();
 
@@ -61,24 +62,21 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	}
 
 	/**
-	 * Attach a callback to invoke when this task is stopped.
-	 * @param {TaskDisposeCallback} callback The callback.
-	 * @returns The callback binding.
+	 * Create a new disposable that will be disposed when this task is deactivated.
 	 */
-	protected dispose(callback: TaskDisposeCallback): TaskBinding {
-		this._taskDisposeCallbacks.add(callback);
-		return () => {
-			this._taskDisposeCallbacks.delete(callback);
-		};
+	protected disposable(callback?: DisposeCallback) {
+		const disposable = new Disposable(callback);
+		this._taskDisposables.add(disposable);
+		return disposable;
 	}
 
 	/**
 	 * Get the latest or next future output from a source. If the source pushes additional output, this task is reset.
 	 * @param {TaskSource<S>} source The source.
 	 * @returns {Promise<S>} that represents the source output.
-	 * @template T The source output type.
+	 * @template S The source output type.
 	 */
-	protected use<S>(source: TaskSource<S>): Promise<S> {
+	protected useSource<S>(source: TaskSource<S>): Promise<S> {
 		return new Promise((resolve, reject) => {
 			let pushed = false;
 			const dispose = source.pipe(state => {
@@ -94,6 +92,16 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 				source.activate();
 			}
 		});
+	}
+
+	/**
+	 * Get the latest or next future output from a source obtained from this task's container. If the source pushes additional output, this task is reset.
+	 * @param {InstanceType<TaskSource<S>>} sourceType The source type.
+	 * @returns {Promise<S>} that represents the source output.
+	 * @template S The source output type.
+	 */
+	protected use<S>(sourceType: InstanceType<TaskSource<S>>): Promise<S> {
+		return this.useSource(this.container.get<TaskSource<S>>(sourceType));
 	}
 
 	protected * subscribe(ea: EventAggregator) {
@@ -115,7 +123,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	public activate() {
 		if (!this._taskActive) {
 			this._taskActive = this._taskPending.empty().then(() => {
-				const state = this.run()
+				const state = this.run();
 				if (state instanceof Promise) {
 					this.push(state);
 				}
@@ -127,18 +135,17 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	}
 
 	/**
-	 * Ensure that the task is deactivated.
-	 * This will invoke dispose callbacks and wait until all disposals and outputs are resolved.
-	 * @returns {Promise<void>} that resolves when the task is inactive. This promise should never reject an may be ignored.
+	 * Ensure that the task is deactivated and dispose all disposables.
+	 * @returns {Promise<void>} that resolves when the task is inactive and all disposables are disposed. This promise should never reject an may be ignored.
 	 */
 	public deactivate() {
 		if (this._taskActive) {
 			this._taskActive = null;
 
-			const callbacks = Array.from(this._taskDisposeCallbacks);
-			this._taskDisposeCallbacks.clear();
-			for (const callback of callbacks) {
-				this._taskPending.put(Promise.resolve().then(callback).catch(error => {
+			const disposables = Array.from(this._taskDisposables);
+			this._taskDisposables.clear();
+			for (const disposable of disposables) {
+				this._taskPending.put(disposable.dispose().catch(error => {
 					this.publish(new TaskError(this, error));
 				}));
 			}
@@ -184,12 +191,6 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 		};
 	}
 }
-
-/**
- * A callback that is invoked when the task is disposed.
- * @returns {Promise<void>} that delays the promise returned by {@link Task.prototype.stop} and the next execution of the task.
- */
-export type TaskDisposeCallback = () => void | Promise<void>;
 
 /**
  * A callback that is called with promises that represent task output.

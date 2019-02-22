@@ -7,7 +7,7 @@ import { Container, Task, TaskError, EventAggregator } from '..';
 test('dispose error', async t => {
     const task = new class extends Task {
         async run() {
-            this.dispose(() => {
+            this.disposable().resolve(() => {
                 throw 'foo';
             });
         }

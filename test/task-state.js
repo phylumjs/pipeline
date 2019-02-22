@@ -30,11 +30,11 @@ test('reset', async t => {
     mayRun = false;
 });
 
-test('dispose', async t => {
+test('disposable', async t => {
     let disposed = false;
     const task = new class extends Task {
         run() {
-            this.dispose(async () => {
+            this.disposable(async () => {
                 await ticks(1);
                 disposed = true;
             });
@@ -45,18 +45,15 @@ test('dispose', async t => {
     t.true(disposed);
 });
 
-test('unbind dispose', async t => {
-    let disposed = false;
+test('use disposable wrongly', async t => {
     const task = new class extends Task {
         run() {
-            const disposeBinding = this.dispose(async () => {
-                await ticks(1);
-                disposed = true;
-            });
-            disposeBinding();
+            const foo = this.disposable();
+            foo.resolve();
+            foo.resolve();
+            t.throws(() => foo.resolve(() => {}));
         }
     }(new Container());
     await task.activate();
     await task.deactivate();
-    t.false(disposed);
 });

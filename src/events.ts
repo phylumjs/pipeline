@@ -1,4 +1,6 @@
 
+import { Hook } from './hooks';
+
 /**
  * A simple pub/sub system for events.
  */
@@ -30,10 +32,10 @@ export class EventAggregator {
 	 * Subscribe to an event.
 	 * @param {EventChannel<E>} channel The event channel.
 	 * @param listener The event listener.
-	 * @returns {EventSubscription} The event subscription. If the specified listener was already used for this channel, the same event subscription is returned.
+	 * @returns {EventSubscription} The event subscription.
 	 * @template E The event type.
 	 */
-	public subscribe<E extends Event>(channel: EventChannel<E>, listener: EventListener<E>) {
+	public subscribe<E extends Event>(channel: EventChannel<E>, listener: EventListener<E>): EventSubscription {
 		let listeners = this._eventChannels.get(channel);
 		if (!listeners) {
 			this._eventChannels.set(channel, listeners = new Set());
@@ -48,6 +50,30 @@ export class EventAggregator {
 				}
 			}
 		};
+	}
+
+	/**
+	 * Invoke a hook.
+	 * @param {H} hook The hook.
+	 * @returns {Promise<R>} The hook result.
+	 * @template H The hook type.
+	 * @template R The hook result type.
+	 */
+	public invoke<H extends Hook<any, R>, R = H extends Hook<any, infer R> ? R : never>(hook: H): Promise<R> {
+		this.publish(hook);
+		return hook.invoke();
+	}
+
+	/**
+	 * Subscribe to a hook.
+	 * @param {EventChannel<H>} channel The event channel.
+	 * @param {A} action The action. If the same is used multiple times, it will be invoked multiple times by the hook.
+	 * @returns {EventSubscription} The event subscription.
+	 * @template H The hook type.
+	 * @template A The hook action type.
+	 */
+	public hook<H extends Hook<A, any>, A = H extends Hook<infer A, any> ? A : never>(channel: EventChannel<H>, action: A): EventSubscription {
+		return this.subscribe<H>(channel, hook => hook.queue(action));
 	}
 
 	/**

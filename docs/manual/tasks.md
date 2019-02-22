@@ -60,7 +60,7 @@ class GetMessage extends Task<string> {
 
 class LogMessage extends Task<void> {
     async run() {
-        const message = await this.use(container.get(GetMessage));
+        const message = await this.use(GetMessage);
         console.log(message);
     }
 }
@@ -97,32 +97,41 @@ class LogMessage extends Task<void> {
 ```
 
 ## Resources
-When a task allocates resources like file system watchers, it should release these resources when it is deactivated.
+Resources like file system watchers that are allocated by running a task should disposed when the task is deactivated.
+```ts
+import { TaskContext } from '@phylum/pipeline';
+
+class WatchFiles extends Task<void> {
+    run(context: TaskContext) {
+        const watcher = createSomeFSWatcher();
+
+        // Automatically close the watcher when this task is deactivated:
+        this.disposable(() => watcher.close());
+    }
+}
+```
+Note that your task can be deactivated while it is still running.<br>
+If you allocate resources, you should make sure that the task is still active or use a disposable with an asynchronously resolved callback like so:
 ```ts
 class WatchFiles extends Task<void> {
-    run() {
-        const watcher = createSomeFSWatcher();
-        // ...do something with watcher...
+    async run(context: TaskContext) {
+        const disposable = this.disposable();
 
-        // Close the watcher when this task is deactivated:
-        this.dispose(() => watcher.close());
+        // Dome something else...
+
+        const watcher = createSomeFSWatcher();
+        // Automatically close the watcher when this task is deactivated:
+        disposable.resolve(() => watcher.close());
     }
 }
 ```
 
 ## Error Handling
-Critical errors should not be handled by tasks and occur in the following cases:
-+ An error is thrown or rejected by a dispose callback.
-
-In all mentioned cases, an `TaskError` event is published to event aggregators that the task is attached to.
+If an error occurs while invoking a dispose callback, a `TaskError` event is published to all attached event aggregators:
 ```ts
-import { TaskError, EventAggregator } from '@phylum/pipeline';
+import { TaskError } from '@phylum/pipeline';
 
-const ea = new EventAggregator();
-
-someBrokenTask.attach(ea);
-
-ea.subscribe<TaskError>(TaskError, error => {
+container.get(Pipeline).subscribe<TaskError>(TaskError, error => {
     error.task; // The task that published the error.
     error.error; // The error.
 });

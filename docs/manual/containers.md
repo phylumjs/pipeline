@@ -58,3 +58,19 @@ class Baz {
 
 container.get(Baz) // -> Baz { }
 ```
+
+## Nested Containers
+Containers can be nested to share instances across containers.<br>
+To create a nested container, the parent is passed to the constructor:
+```ts
+const parent = new Container();
+
+const child = new Container(parent);
+```
+A nested container implicitly has all instances from it's parents.
+```ts
+parent.use(Foo);
+
+child.has(Foo) // -> true
+child.get(Foo) // -> Foo { }
+```

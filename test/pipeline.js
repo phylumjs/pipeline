@@ -30,7 +30,7 @@ test('activate tasks', async t => {
     let disposed = false;
     const foo = container.get(class extends Task {
         run() {
-            this.dispose(async () => {
+            this.disposable().resolve(async () => {
                 await ticks(4);
                 disposed = true;
             });
@@ -48,7 +48,7 @@ test('deactivate tasks', async t => {
     let disposed = false;
     await container.get(class extends Task {
         run() {
-            this.dispose(async () => {
+            this.disposable().resolve(async () => {
                 await ticks(4);
                 disposed = true;
             });
