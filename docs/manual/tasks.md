@@ -7,7 +7,12 @@ To get started, you can use the same container for everything or [read more...](
 import { Container } from '@phylum/pipeline';
 
 const container = new Container();
+
+container.get(MyTask) // -> MyTask { ... }
 ```
+
+## Events
+When a task instance is created, it will attach itself to the closest **pipeline** instance from it's container. The pipeline is an event aggregator that allows tasks to publish or subscribe to events.
 
 ## Basic Implementation
 Task behaviour is implemented with the `.run` function. If it returns a promise, that promise will be used as output.<br>
@@ -136,3 +141,4 @@ container.get(Pipeline).subscribe<TaskError>(TaskError, error => {
     error.error; // The error.
 });
 ```
+If the task pushes rejected output, the emitted output states can be safely ignored without causing unhandled rejections.
