@@ -1,8 +1,10 @@
 # Tasks
+*Tasks* execute async operations.<br>
+They can process the output of other tasks or update their own output over time.
 
 ## Containers
 Task instances should be obtained from a container.<br>
-To get started, you can use the same container for everything or [read more...](./containers.md)
+To get started, you can use the same container for everything or [read more...](/manual/containers)
 ```ts
 import { Container } from '@phylum/pipeline';
 

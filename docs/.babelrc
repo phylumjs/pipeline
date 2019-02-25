@@ -1,0 +1,18 @@
+{
+	"presets": [
+		[
+			"@babel/preset-env",
+			{
+				"modules": false,
+				"targets": {
+					"ie": "10",
+					"ios": "7"
+				}
+			}
+		]
+	],
+	"plugins": [
+		"@babel/plugin-transform-runtime",
+		"@babel/plugin-syntax-dynamic-import"
+	]
+}
