@@ -3,7 +3,7 @@
 const { resolve } = require('path');
 const { publish } = require('gh-pages');
 
-publish(resolve(__dirname, '../dist'), {
+publish(resolve(__dirname, '../../dist'), {
 	repo: `${process.env.DEPLOY_TOKEN}@${process.env.DEPLOY_REPO}`,
 	branch: 'master',
 	silent: true,
@@ -16,5 +16,7 @@ publish(resolve(__dirname, '../dist'), {
 	if (error) {
 		console.error(error);
 		process.exit(1);
+	} else {
+		console.log('Deployed.');
 	}
 });
