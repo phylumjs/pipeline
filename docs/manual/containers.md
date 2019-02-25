@@ -1,4 +1,7 @@
 # Containers
+A *container* represents the environment in which tasks are executed.<br>
+They can hold different task instances or can be used for dependency injection.
+
 ```ts
 import { Container } from '@phylum/pipeline';
 
