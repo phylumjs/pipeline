@@ -12,7 +12,8 @@
 		"test": "npm run compile:node && nyc -- ava -v",
 		"test:watch": "npm run compile:node && concurrently -n tsc,ava \"tsc -w -p tsconfig-node.json\" \"ava -w -v\"",
 		"prepack": "npm run test && npm run compile",
-		"report-coverage": "nyc report --reporter=text-lcov | coveralls"
+		"report-coverage": "nyc report --reporter=text-lcov | coveralls",
+		"deploy-docs": "cd docs && npm run build && node src/tools/deploy"
 	},
 	"ava": {
 		"files": [
