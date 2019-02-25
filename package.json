@@ -1,28 +1,30 @@
 {
 	"name": "@phylum/pipeline",
-	"version": "3.3.0",
-	"description": "Flexible async task runner.",
-	"main": "lib",
+	"version": "4.0.0-beta.5",
+	"description": "Phylum Pipeline",
+	"main": "dist/node/index.js",
+	"browser": "dist/es2015/index.js",
 	"scripts": {
-		"test": "nyc -- ava --verbose",
-		"dev": "ava --watch --verbose",
-		"report-coverage": "nyc report --reporter=text-lcov | coveralls"
-	},
-	"devDependencies": {
-		"ava": "^1.0.1",
-		"coveralls": "^3.0.2",
-		"nyc": "^13.1.0"
-	},
-	"nyc": {
-		"reporter": [
-			"text",
-			"text-summary"
-		]
+		"compile:node": "rimraf dist/node && tsc -p tsconfig-node.json",
+		"compile:es2015": "rimraf dist/es2015 && tsc -p tsconfig-es2015.json",
+		"compile:es2017": "rimraf dist/es2017 && tsc -p tsconfig-es2017.json",
+		"compile": "concurrently npm:compile:node npm:compile:es2015 npm:compile:es2017",
+		"test": "npm run compile:node && nyc -- ava -v",
+		"test:watch": "npm run compile:node && concurrently -n tsc,ava \"tsc -w -p tsconfig-node.json\" \"ava -w -v\"",
+		"prepack": "npm run test && npm run compile"
 	},
 	"ava": {
 		"files": [
 			"test/*.js"
 		]
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"ava": "^1.2.1",
+		"concurrently": "^4.1.0",
+		"nyc": "^13.3.0",
+		"rimraf": "^2.6.3",
+		"typescript": "^3.3.3"
 	},
 	"repository": "github:phylumjs/pipeline",
 	"author": "Max J. Polster",
