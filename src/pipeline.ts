@@ -7,41 +7,41 @@ import { EventAggregator, Event } from './events';
  * Pipeline instances can be obtained from a container.
  */
 export class Pipeline extends EventAggregator {
-    constructor(container: Container) {
-        super();
-    }
+	constructor(container: Container) {
+		super();
+	}
 
-    /**
-     * Activate all attached tasks.
-     */
-    async activate(): Promise<void> {
-        const event = new PipelineActivateEvent();
-        this.publish(event);
-        await Promise.all(event.pending);
-    }
+	/**
+	 * Activate all attached tasks.
+	 */
+	async activate(): Promise<void> {
+		const event = new PipelineActivateEvent();
+		this.publish(event);
+		await Promise.all(event.pending);
+	}
 
-    /**
-     * Deactivate all attached tasks.
-     */
-    async deactivate(): Promise<void> {
-        const event = new PipelineDeactivateEvent();
-        this.publish(event);
-        await Promise.all(event.pending);
-    }
+	/**
+	 * Deactivate all attached tasks.
+	 */
+	async deactivate(): Promise<void> {
+		const event = new PipelineDeactivateEvent();
+		this.publish(event);
+		await Promise.all(event.pending);
+	}
 }
 
 /**
  * An event that is published by the pipeline to activate all attached tasks.
  */
 export class PipelineActivateEvent implements Event {
-    public readonly channel = PipelineActivateEvent;
-    public readonly pending: Array<Promise<void>> = [];
+	public readonly channel = PipelineActivateEvent;
+	public readonly pending: Array<Promise<void>> = [];
 }
 
 /**
  * An event that is published by the pipeline to deactivate all attached tasks.
  */
 export class PipelineDeactivateEvent implements Event {
-    public readonly channel = PipelineDeactivateEvent;
-    public readonly pending: Array<Promise<void>> = [];
+	public readonly channel = PipelineDeactivateEvent;
+	public readonly pending: Array<Promise<void>> = [];
 }
