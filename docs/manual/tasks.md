@@ -24,9 +24,9 @@ import { Task } from '@phylum/pipeline';
 import { readJson } from 'some-cool-async-fs-library';
 
 class ConfigLoader extends Task<string> {
-    async run() {
-        return readJson('config.json');
-    }
+	async run() {
+		return readJson('config.json');
+	}
 }
 ```
 
@@ -37,20 +37,20 @@ The following task loads a json config file and pushes an update when the config
 import { readJson, watchFile } from 'some-cool-async-fs-library';
 
 class ConfigLoader extends Task<any> {
-    run() {
-        // Read config:
-        this.push(readJson('config.json'));
+	run() {
+		// Read config:
+		this.push(readJson('config.json'));
 
-        // and watch for changes:
-        const watcher = watchFile('config.json');
-        watcher.on('change', () => {
-            // Read updated config and update output:
-            this.push(readJson('config.json'));
-        })
+		// and watch for changes:
+		const watcher = watchFile('config.json');
+		watcher.on('change', () => {
+			// Read updated config and update output:
+			this.push(readJson('config.json'));
+		})
 
-        // When the task is deactivated, close the watcher:
-        this.disposable(() => watcher.close());
-    }
+		// When the task is deactivated, close the watcher:
+		this.disposable(() => watcher.close());
+	}
 }
 ```
 
@@ -60,16 +60,16 @@ Whenever the source emits updated output, the dependent task is reset, so that i
 *Note that the task could miss some updates, when the output source pushes updates while the task is beeing reset.*
 ```ts
 class GetMessage extends Task<string> {
-    async run() {
-        return 'Hello World!';
-    }
+	async run() {
+		return 'Hello World!';
+	}
 }
 
 class LogMessage extends Task<void> {
-    async run() {
-        const message = await this.use(GetMessage);
-        console.log(message);
-    }
+	async run() {
+		const message = await this.use(GetMessage);
+		console.log(message);
+	}
 }
 ```
 
@@ -80,26 +80,26 @@ The following is an example of a task that handles multiple output of a `getLate
 // GetLatestMessage is a task that may emit multiple outputs over time.
 
 class LogMessage extends Task<void> {
-    run() {
-        // Pipe every output of the 'getLatestMessage' task
-        // to the callback that handles output states:
-        const binding = container.get(GetLatestMessage).pipe(state => {
-            state.then(message => {
-                console.log(message);
-            }).catch(error => {
-                // In case of an error, you may want to
-                // forward it to consumers of this task:
-                this.error(error);
-            });
-        });
+	run() {
+		// Pipe every output of the 'getLatestMessage' task
+		// to the callback that handles output states:
+		const binding = container.get(GetLatestMessage).pipe(state => {
+			state.then(message => {
+				console.log(message);
+			}).catch(error => {
+				// In case of an error, you may want to
+				// forward it to consumers of this task:
+				this.error(error);
+			});
+		});
 
-        // Ensure that the task is active:
-        getLatestMessage.activate();
+		// Ensure that the task is active:
+		getLatestMessage.activate();
 
-        // 'binding' is a callback that removes the callback,
-        // so we want to remove it when this task is deactivated:
-        this.dispose(binding);
-    }
+		// 'binding' is a callback that removes the callback,
+		// so we want to remove it when this task is deactivated:
+		this.dispose(binding);
+	}
 }
 ```
 
@@ -109,27 +109,27 @@ Resources like file system watchers that are allocated by running a task should 
 import { TaskContext } from '@phylum/pipeline';
 
 class WatchFiles extends Task<void> {
-    run(context: TaskContext) {
-        const watcher = createSomeFSWatcher();
+	run(context: TaskContext) {
+		const watcher = createSomeFSWatcher();
 
-        // Automatically close the watcher when this task is deactivated:
-        this.disposable(() => watcher.close());
-    }
+		// Automatically close the watcher when this task is deactivated:
+		this.disposable(() => watcher.close());
+	}
 }
 ```
 Note that your task can be deactivated while it is still running.<br>
 If you allocate resources, you should make sure that the task is still active or use a disposable with an asynchronously resolved callback like so:
 ```ts
 class WatchFiles extends Task<void> {
-    async run(context: TaskContext) {
-        const disposable = this.disposable();
+	async run(context: TaskContext) {
+		const disposable = this.disposable();
 
-        // Dome something else...
+		// Dome something else...
 
-        const watcher = createSomeFSWatcher();
-        // Automatically close the watcher when this task is deactivated:
-        disposable.resolve(() => watcher.close());
-    }
+		const watcher = createSomeFSWatcher();
+		// Automatically close the watcher when this task is deactivated:
+		disposable.resolve(() => watcher.close());
+	}
 }
 ```
 
@@ -139,8 +139,8 @@ If an error occurs while invoking a dispose callback, a `TaskError` event is pub
 import { TaskError } from '@phylum/pipeline';
 
 container.get(Pipeline).subscribe<TaskError>(TaskError, error => {
-    error.task; // The task that published the error.
-    error.error; // The error.
+	error.task; // The task that published the error.
+	error.error; // The error.
 });
 ```
 If the task pushes rejected output, the emitted output states can be safely ignored without causing unhandled rejections.
