@@ -1,14 +1,12 @@
 # Containers
 A *container* represents the environment in which tasks are executed.<br>
-They can hold different task instances or can be used for dependency injection.
+Containers can hold different task instances or can be used for dependency injection.
 
 ```ts
 import { Container } from '@phylum/pipeline';
 
 const container = new Container();
 ```
-Containers are generic maps of *instance types* to *instances*.<br>
-If an instance of a specific type is requested from a container, it will return an existing instance of that type or create a new instance.
 
 ## Accessing Instances
 Instances can be obtained automatically using the `get` or `getOwn` function.<br>

@@ -4,4 +4,4 @@ node_js:
 
 after_success:
   - npm run report-coverage
-  - cd docs && npm install && npm run build && node src/tools/deploy
+  - npm run deploy-docs

@@ -18,6 +18,9 @@ They can process the output of other tasks or update their own output over time.
 A *container* represents the environment in which tasks are executed.<br>
 They can hold different task instances or can be used for dependency injection.
 
+#### [Events](/manual/events)
+PhylumJS includes a typed event system that can be used to communicate with tasks or to implement hooks.
+
 #### Example
 The following example is written in [TypeScript](http://typescriptlang.org/)
 ```ts
