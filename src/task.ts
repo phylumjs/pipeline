@@ -1,6 +1,6 @@
 
 import { Container, InstanceType } from './container';
-import { Disposable, DisposeCallback } from './disposable';
+import { FutureDisposable, DisposeCallback, DisposableObject } from './disposable';
 import { EventAggregator, EventClient, Event } from './events';
 import { Pipeline, PipelineActivateEvent, PipelineDeactivateEvent } from './pipeline';
 import { StateBag, StateQueue } from './states';
@@ -10,10 +10,10 @@ import { StateBag, StateQueue } from './states';
  * Task instances can be obtained from a container.
  * @template T The output type.
  */
-export abstract class Task<T> extends EventClient implements TaskSource<T> {
+export abstract class Task<T> extends EventClient implements TaskSource<T>, DisposableObject {
 	private _taskActive: Promise<void>;
 	private _taskPending = new StateBag();
-	private _taskDisposables = new Set<Disposable>();
+	private _taskDisposables = new Set<FutureDisposable>();
 	private _taskOutput = new StateQueue<T>();
 	private _taskOutputCallbacks = new Set<TaskOutputCallback<T>>();
 
@@ -27,10 +27,27 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	}
 
 	/**
+	 * Deactivate this task and detach it from the pipeline.
+	 */
+	public async dispose(): Promise<void> {
+		await this.deactivate();
+		this.container.get(Pipeline).detach(this);
+	}
+
+	/**
 	 * This function is called when the task is activated.
 	 * @returns {Promise<T>} Nothing or a promise to use as output.
 	 */
 	protected abstract run(): void | Promise<T>;
+
+	/**
+	 * Call the actual run implementation.
+	 * This can be used to inject arguments.
+	 * @returns {Promise<T>} Nothing or a promise to use as output.
+	 */
+	protected onRun(): void | Promise<T> {
+		return this.run();
+	}
 
 	/**
 	 * Push output.
@@ -65,7 +82,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	 * Create a new disposable that will be disposed when this task is deactivated.
 	 */
 	protected disposable(callback?: DisposeCallback) {
-		const disposable = new Disposable(callback);
+		const disposable = new FutureDisposable(callback);
 		this._taskDisposables.add(disposable);
 		return disposable;
 	}
@@ -123,7 +140,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 	public activate() {
 		if (!this._taskActive) {
 			this._taskActive = this._taskPending.empty().then(() => {
-				const state = this.run();
+				const state = this.onRun();
 				if (state instanceof Promise) {
 					this.push(state);
 				}
@@ -191,6 +208,11 @@ export abstract class Task<T> extends EventClient implements TaskSource<T> {
 		};
 	}
 }
+
+/**
+ * Represents a task type.
+ */
+export type TaskType<T extends Task<any>> = new(container: Container) => T;
 
 /**
  * A callback that is called with promises that represent task output.

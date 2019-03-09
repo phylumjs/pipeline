@@ -3,7 +3,7 @@
 
 import test from 'ava';
 import ticks from './util/ticks';
-import { Container, Pipeline, Task, PipelineActivateEvent } from '..';
+import { Container, Pipeline, Task } from '..';
 
 test('automatically attach to tasks with container', async t => {
 	const container = new Container();

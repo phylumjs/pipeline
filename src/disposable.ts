@@ -1,53 +1,93 @@
 
 /**
- * A disposable with an asynchronously resolvable callback that allows asynchronous
- * disposing at a time where it is unknown how to actually dispose a resource.
+ * A disposable.
  */
-export class Disposable {
-	/**
-	 * Create a disposable.
-	 * @param callback An optional callback to immediately resolve this disposable.
-	 */
-	public constructor(callback?: DisposeCallback) {
-		if (callback) {
-			this.resolve(callback);
-		}
-	}
-
-	private _disposed = false;
-	private _callback = new Promise<DisposeCallback>(resolve => this._resolve = resolve);
-	private _resolve: (callback: DisposeCallback) => void;
-	private _resolved = false;
-
-	/**
-	 * Resolve the callback that will be invoked as soon as the disposable is disposed.
-	 * @param {DisposeCallback} callback The callback.
-	 */
-	public resolve(callback?: DisposeCallback) {
-		if (callback && this._resolved) {
-			throw new Error('This disposable is already resolved.');
-		}
-		this._resolve(callback);
-		this._resolved = true;
-	}
-
+export interface DisposableObject {
 	/**
 	 * Dispose this disposable.
-	 * This will wait until an optional callback is resolved and the disposal is complete.
+	 * @returns {void | Promise<void>} An optional promise that resolves to indicate that the disposal is complete.
 	 */
-	public async dispose() {
-		if (!this._disposed) {
-			this._disposed = true;
-			const callback = await this._callback;
-			if (callback) {
-				await callback();
-			}
-		}
-	}
+	dispose(): void | Promise<void>;
 }
 
 /**
  * A callback to dispose something.
- * @returns {void | PromiseLike<void>} An optional promise that resolves to indicate that the disposal is complete.
+ * @returns {void | Promise<void>} An optional promise that resolves to indicate that the disposal is complete.
  */
-export type DisposeCallback = () => void | PromiseLike<void>;
+export type DisposeCallback = () => void | Promise<void>;
+
+/**
+ * Check if a value is a dispose callback.
+ * @param value
+ */
+export function isDisposeCallback(value: any): value is DisposeCallback {
+	return typeof value === 'function';
+}
+
+/**
+ * Check if a value is a disposable object.
+ * @param value
+ */
+export function isDisposableObject(value: any): value is DisposableObject {
+	return value && isDisposeCallback(value.dispose);
+}
+
+/**
+ * Dispose a disposable.
+ * @param disposable
+ */
+export function dispose(disposable: Disposable): void | Promise<void> {
+	if (isDisposableObject(disposable)) {
+		return disposable.dispose();
+	}
+	if (isDisposeCallback(disposable)) {
+		return disposable();
+	}
+}
+
+/**
+ * A disposable object or a callback.
+ */
+export type Disposable = DisposableObject | DisposeCallback;
+
+/**
+ * A disposable that allows asynchronous resolving of the actual disposable.
+ */
+export class FutureDisposable implements DisposableObject {
+	/**
+	 * Create a disposable.
+	 * @param disposable An optional disposable to immediately resolve this disposable.
+	 */
+	public constructor(disposable?: Disposable) {
+		if (disposable) {
+			this.resolve(disposable);
+		}
+	}
+
+	private _disposed = false;
+	private _disposable = new Promise<Disposable>(resolve => this._resolve = resolve);
+	private _resolve: (callback: Disposable) => void;
+	private _resolved = false;
+
+	/**
+	 * Resolve this future disposable.
+	 * @param {Disposable} disposable The disposable.
+	 */
+	public resolve(disposable?: Disposable) {
+		if (disposable && this._resolved) {
+			throw new Error('This disposable is already resolved.');
+		}
+		this._resolve(disposable);
+		this._resolved = true;
+	}
+
+	public async dispose() {
+		if (!this._disposed) {
+			this._disposed = true;
+			const disposable = await this._disposable;
+			if (disposable) {
+				await dispose(disposable);
+			}
+		}
+	}
+}

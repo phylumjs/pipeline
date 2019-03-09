@@ -4,29 +4,29 @@
 import test from 'ava';
 import { Container } from '..';
 
-test('use factory', t => {
+test('get from factory', t => {
 	const container = new Container();
 	const factory = {createInstance: () => 'foo'};
-	t.is(container.use(factory), 'foo');
+	t.is(container.get(factory), 'foo');
 });
 
-test('use factory function', t => {
+test('get from factory function', t => {
 	const container = new Container();
 	const factory = () => 'foo';
-	t.is(container.use(factory), 'foo');
+	t.is(container.get(factory), 'foo');
 });
 
-test('use class', t => {
+test('get from class', t => {
 	const container = new Container();
 	class Foo {}
-	t.true(container.use(Foo) instanceof Foo);
+	t.true(container.get(Foo) instanceof Foo);
 
 	class Bar {
 		constructor(c) {
 			t.is(c, container);
 		}
 	}
-	t.true(container.use(Bar) instanceof Bar);
+	t.true(container.get(Bar) instanceof Bar);
 });
 
 test('prefer factory over class', t => {
@@ -41,20 +41,33 @@ test('prefer factory over class', t => {
 		}
 	};
 	// @ts-ignore
-	t.true(container.use(Foo) instanceof Foo);
+	t.true(container.get(Foo) instanceof Foo);
 });
 
-test('use invalid factory', t => {
+test('get from invalid factory', t => {
 	const container = new Container();
-	t.throws(() => container.use(() => null));
+	t.throws(() => container.get(() => null));
 });
 
-test('delete', t => {
+test('delete', async t => {
 	const container = new Container();
 	const factory = () => 'foo';
-	container.use(factory);
-	container.delete(factory);
+	container.get(factory);
+	await container.delete(factory);
 	t.false(container.has(factory));
+});
+
+test('delete and dispose', async t => {
+	let disposed = false;
+	class Foo {
+		async dispose() {
+			disposed = true;
+		}
+	}
+	const container = new Container();
+	container.get(Foo);
+	await container.delete(Foo);
+	t.true(disposed);
 });
 
 test('has, hasOwn', t => {
@@ -63,13 +76,13 @@ test('has, hasOwn', t => {
 	const factory = () => 'foo';
 	t.false(child.has(factory));
 	t.false(child.hasOwn(factory));
-	parent.use(factory);
+	parent.getOwn(factory);
 	t.true(child.has(factory));
 	t.false(child.hasOwn(factory));
 	parent.delete(factory);
 	t.false(child.has(factory));
 	t.false(child.hasOwn(factory));
-	child.use(factory);
+	child.getOwn(factory);
 	t.true(child.has(factory));
 	t.true(child.hasOwn(factory));
 });
@@ -101,10 +114,15 @@ test('get, getOwn', t => {
 	t.not(child.get(Foo), parent.get(Foo));
 });
 
-test('clear', t => {
+test('dispose', async t => {
+	let disposed = false;
+	class Foo {
+		async dispose() {
+			disposed = true;
+		}
+	}
 	const container = new Container();
-	const factory = () => 'foo';
-	container.use(factory);
-	container.clear();
-	t.false(container.has(factory));
+	container.get(Foo);
+	await container.dispose();
+	t.true(disposed);
 });

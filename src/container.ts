@@ -1,8 +1,11 @@
 
+import { DisposableObject, isDisposableObject } from './disposable';
+
 /**
- * A lightweight dependency injection container.
+ * The environment in which tasks are executed.
+ * Containers can hold different task instances or can be used for dependency injection.
  */
-export class Container {
+export class Container implements DisposableObject {
 	private readonly _containerInstances = new Map<InstanceType<any>, any>();
 
 	/**
@@ -13,29 +16,31 @@ export class Container {
 	}
 
 	/**
-	 * Use the specified type to create and store a new instance in this container.
-	 * @param {InstanceType<T>} type The instance type.
-	 * @returns {T} The instance.
-	 * @template T The instance type.
+	 * Dispose this container and all instances.
 	 */
-	public use<T>(type: InstanceType<T>): T {
-		const instance = (isFactory(type) && type.createInstance(this))
-			|| (isFactoryFn(type) && type(this))
-			|| (isClass(type) && new type(this));
-		if (!instance) {
-			throw new TypeError('Unable to create instance.');
+	public async dispose(): Promise<void> {
+		const results = [];
+		for (const [type, instance] of this._containerInstances) {
+			this._containerInstances.delete(type);
+			if (isDisposableObject(instance)) {
+				results.push(instance.dispose());
+			}
 		}
-		this._containerInstances.set(type, instance);
-		return instance;
+		await Promise.all(results);
 	}
 
 	/**
-	 * Delete an instance from this container.
+	 * Delete an instance from this container and dispose it.
 	 * @param {InstanceType<T>} type The instance type.
+	 * @returns {Promise<void>} that resolves when the instance is disposed.
 	 * @template T The instance type.
 	 */
-	public delete<T>(type: InstanceType<T>) {
+	public async delete<T>(type: InstanceType<T>): Promise<void> {
+		const instance = this._containerInstances.get(type);
 		this._containerInstances.delete(type);
+		if (isDisposableObject(instance)) {
+			await instance.dispose();
+		}
 	}
 
 	/**
@@ -57,6 +62,17 @@ export class Container {
 		return this._containerInstances.has(type);
 	}
 
+	private _add<T>(type: InstanceType<T>): T {
+		const instance = (isFactory(type) && type.createInstance(this))
+			|| (isFactoryFn(type) && type(this))
+			|| (isClass(type) && new type(this));
+		if (!instance) {
+			throw new TypeError('Unable to create instance.');
+		}
+		this._containerInstances.set(type, instance);
+		return instance;
+	}
+
 	/**
 	 * Get an existing instance from this or a parent container or create and store a new instance in this container.
 	 * @param {InstanceType<T>} type The instance type.
@@ -70,7 +86,7 @@ export class Container {
 				return instance;
 			}
 		}
-		return this.use<T>(type);
+		return this._add<T>(type);
 	}
 
 	/**
@@ -84,7 +100,7 @@ export class Container {
 		if (instance) {
 			return instance;
 		}
-		return this.use<T>(type);
+		return this._add<T>(type);
 	}
 
 	/**
@@ -94,13 +110,6 @@ export class Container {
 		for (let target: Container = this; target; target = target.parentContainer) {
 			yield target;
 		}
-	}
-
-	/**
-	 * Delete all instances from this container.
-	 */
-	public clear() {
-		this._containerInstances.clear();
 	}
 }
 
@@ -127,7 +136,9 @@ export type InstanceFactoryFn<T> = (container: Container) => T;
  * A class that can be instantiated as the instance.
  * @template T The instance type.
  */
-export type InstanceClass<T> = { new(container: Container): T };
+export interface InstanceClass<T> {
+	new(container: Container): T
+}
 
 /**
  * An instance type can be used to create and store instances in containers.
