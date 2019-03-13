@@ -14,7 +14,7 @@ container.get(MyTask) // -> MyTask { ... }
 ```
 
 ## Events
-When a task instance is created, it will attach itself to the closest **pipeline** instance from it's container. The pipeline is an event aggregator that allows tasks to publish or subscribe to events.
+When a task instance is created, it will attach itself to the closest **event aggregator** instance from it's container.
 
 ## Basic Implementation
 Task behaviour is implemented with the `.run` function. If it returns a promise, that promise will be used as output.<br>

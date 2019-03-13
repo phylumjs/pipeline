@@ -2,7 +2,6 @@
 import { Container, InstanceType } from './container';
 import { FutureDisposable, DisposeCallback, DisposableObject } from './disposable';
 import { EventAggregator, EventClient, Event } from './events';
-import { Pipeline, PipelineActivateEvent, PipelineDeactivateEvent } from './pipeline';
 import { StateBag, StateQueue } from './states';
 
 /**
@@ -23,7 +22,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 	 */
 	public constructor(public readonly container: Container) {
 		super();
-		container.get(Pipeline).attach(this);
+		container.get(EventAggregator).attach(this);
 	}
 
 	/**
@@ -31,7 +30,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 	 */
 	public async dispose(): Promise<void> {
 		await this.deactivate();
-		this.container.get(Pipeline).detach(this);
+		this.container.get(EventAggregator).detach(this);
 	}
 
 	/**
@@ -119,18 +118,6 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 	 */
 	protected use<S>(sourceType: InstanceType<TaskSource<S>>): Promise<S> {
 		return this.useSource(this.container.get<TaskSource<S>>(sourceType));
-	}
-
-	protected * subscribe(ea: EventAggregator) {
-		yield * super.subscribe(ea);
-
-		yield ea.subscribe<PipelineActivateEvent>(PipelineActivateEvent, event => {
-			event.pending.push(this.activate());
-		});
-
-		yield ea.subscribe<PipelineDeactivateEvent>(PipelineDeactivateEvent, event => {
-			event.pending.push(this.deactivate());
-		});
 	}
 
 	/**
