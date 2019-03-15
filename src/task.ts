@@ -35,9 +35,10 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 
 	/**
 	 * This function is called when the task is activated.
+	 * @param args Arguments can be injected by the `onRun` implementation.
 	 * @returns {Promise<T>} Nothing or a promise to use as output.
 	 */
-	protected abstract run(): void | Promise<T>;
+	protected abstract run(...args: any[]): void | Promise<T>;
 
 	/**
 	 * Call the actual run implementation.
