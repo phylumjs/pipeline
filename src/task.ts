@@ -15,6 +15,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 	private _taskDisposables = new Set<FutureDisposable>();
 	private _taskOutput = new StateQueue<T>();
 	private _taskOutputCallbacks = new Set<TaskOutputCallback<T>>();
+	private _taskSources = new Map<any, Promise<any>>();
 
 	/**
 	 * Create a new task.
@@ -89,30 +90,36 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 
 	/**
 	 * Get the latest or next future output from a source. If the source pushes additional output, this task is reset.
+	 * This function will return the same promise for the same source until the task has been decativated.
 	 * @param {TaskSource<S>} source The source.
 	 * @returns {Promise<S>} that represents the source output.
 	 * @template S The source output type.
 	 */
 	protected useSource<S>(source: TaskSource<S>): Promise<S> {
-		return new Promise((resolve, reject) => {
-			let pushed = false;
-			const dispose = source.pipe(state => {
-				if (pushed) {
-					dispose();
-					this.reset();
-				} else {
-					pushed = true;
-					state.then(resolve, reject);
+		let promise = this._taskSources.get(source) as Promise<S>;
+		if (!promise) {
+			this._taskSources.set(source, promise = new Promise((resolve, reject) => {
+				let pushed = false;
+				const dispose = source.pipe(state => {
+					if (pushed) {
+						dispose();
+						this.reset();
+					} else {
+						pushed = true;
+						state.then(resolve, reject);
+					}
+				});
+				if (source.activate) {
+					source.activate();
 				}
-			});
-			if (source.activate) {
-				source.activate();
-			}
-		});
+			}));
+		}
+		return promise;
 	}
 
 	/**
 	 * Get the latest or next future output from a source obtained from this task's container. If the source pushes additional output, this task is reset.
+	 * This function will return the same promise for the same source until the task has been decativated.
 	 * @param {InstanceType<TaskSource<S>>} sourceType The source type.
 	 * @returns {Promise<S>} that represents the source output.
 	 * @template S The source output type.
@@ -146,6 +153,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 	public deactivate() {
 		if (this._taskActive) {
 			this._taskActive = null;
+			this._taskSources.clear();
 
 			const disposables = Array.from(this._taskDisposables);
 			this._taskDisposables.clear();
