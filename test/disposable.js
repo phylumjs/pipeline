@@ -2,7 +2,7 @@
 'use strict';
 
 import test from 'ava';
-import { dispose } from '..';
+import { CompositeDisposable, dispose } from '..';
 
 test('dispose non-disposable', async t => {
     // @ts-ignore
@@ -22,4 +22,14 @@ test('dispose object', async t => {
 
 test('dispose callback', async t => {
     await dispose(async () => t.pass());
+});
+
+test('composite', async t => {
+    t.plan(2);
+    const disposable = new CompositeDisposable()
+        .add(() => t.pass())
+        .add(() => t.pass());
+
+    await disposable.dispose();
+    await disposable.dispose();
 });

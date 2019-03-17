@@ -2,7 +2,7 @@
 'use strict';
 
 import test from 'ava';
-import { Container } from '..';
+import { Container, CompositeDisposable } from '..';
 
 test('get from factory', t => {
 	const container = new Container();
@@ -125,4 +125,14 @@ test('dispose', async t => {
 	container.get(Foo);
 	await container.dispose();
 	t.true(disposed);
+});
+
+test('get CompositeDisposable', async t => {
+	t.plan(2);
+	const parent = new Container();
+	parent.get(CompositeDisposable);
+	const container = new Container(parent);
+	container.disposable(() => t.pass());
+	t.true(container.hasOwn(CompositeDisposable));
+	await container.dispose();
 });
