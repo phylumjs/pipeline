@@ -36,7 +36,7 @@ export function isDisposableObject(value: any): value is DisposableObject {
  * Dispose a disposable.
  * @param disposable
  */
-export function dispose(disposable: Disposable): void | Promise<void> {
+export async function dispose(disposable: Disposable): Promise<void> {
 	if (isDisposableObject(disposable)) {
 		return disposable.dispose();
 	}
@@ -54,16 +54,6 @@ export type Disposable = DisposableObject | DisposeCallback;
  * A disposable that allows asynchronous resolving of the actual disposable.
  */
 export class FutureDisposable implements DisposableObject {
-	/**
-	 * Create a disposable.
-	 * @param disposable An optional disposable to immediately resolve this disposable.
-	 */
-	public constructor(disposable?: Disposable) {
-		if (disposable) {
-			this.resolve(disposable);
-		}
-	}
-
 	private _disposed = false;
 	private _disposable = new Promise<Disposable>(resolve => this._resolve = resolve);
 	private _resolve: (callback: Disposable) => void;

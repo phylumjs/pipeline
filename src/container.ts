@@ -25,6 +25,15 @@ export class Container implements DisposableObject {
 	}
 
 	/**
+	 * Create a child container that will be disposed with this container.
+	 */
+	public createChild() {
+		const child = new Container(this);
+		this.disposable(child);
+		return child;
+	}
+
+	/**
 	 * Dispose this container and all instances.
 	 */
 	public async dispose(): Promise<void> {

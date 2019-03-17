@@ -136,3 +136,10 @@ test('get CompositeDisposable', async t => {
 	t.true(container.hasOwn(CompositeDisposable));
 	await container.dispose();
 });
+
+test('create child', async t => {
+	const container = new Container();
+	const child = container.createChild();
+	child.disposable(() => t.pass());
+	await container.dispose();
+});

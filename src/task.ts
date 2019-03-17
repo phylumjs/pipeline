@@ -1,6 +1,6 @@
 
 import { Container, InstanceType } from './container';
-import { FutureDisposable, DisposeCallback, DisposableObject } from './disposable';
+import { FutureDisposable, DisposeCallback, DisposableObject, Disposable, dispose } from './disposable';
 import { EventAggregator, EventClient, Event } from './events';
 import { StateBag, StateQueue } from './states';
 
@@ -12,7 +12,7 @@ import { StateBag, StateQueue } from './states';
 export abstract class Task<T> extends EventClient implements TaskSource<T>, DisposableObject {
 	private _taskActive: Promise<void>;
 	private _taskPending = new StateBag();
-	private _taskDisposables = new Set<FutureDisposable>();
+	private _taskDisposables = new Set<Disposable>();
 	private _taskOutput = new StateQueue<T>();
 	private _taskOutputCallbacks = new Set<TaskOutputCallback<T>>();
 	private _taskSources = new Map<any, Promise<any>>();
@@ -80,12 +80,26 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 	}
 
 	/**
-	 * Create a new disposable that will be disposed when this task is deactivated.
+	 * Add or create a disposable that will be disposed when this task is deactivated.
 	 */
-	protected disposable(callback?: DisposeCallback) {
-		const disposable = new FutureDisposable(callback);
+	protected disposable(disposable?: Disposable): FutureDisposable {
+		if (disposable) {
+			this._taskDisposables.add(disposable);
+			return;
+		}
+		disposable = new FutureDisposable();
 		this._taskDisposables.add(disposable);
-		return disposable;
+		return disposable as FutureDisposable;
+	}
+
+	/**
+	 * Create a child container of this task's container that
+	 * will be disposed when this task is deactivated.
+	 */
+	public createChild() {
+		const child = new Container(this.container);
+		this.disposable(child);
+		return child;
 	}
 
 	/**
@@ -158,7 +172,7 @@ export abstract class Task<T> extends EventClient implements TaskSource<T>, Disp
 			const disposables = Array.from(this._taskDisposables);
 			this._taskDisposables.clear();
 			for (const disposable of disposables) {
-				this._taskPending.put(disposable.dispose().catch(error => {
+				this._taskPending.put(dispose(disposable).catch(error => {
 					this.publish(new TaskError(this, error));
 				}));
 			}

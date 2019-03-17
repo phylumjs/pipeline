@@ -57,3 +57,14 @@ test('use disposable wrongly', async t => {
 	await task.activate();
 	await task.deactivate();
 });
+
+test('create child', async t => {
+	const container = new Container();
+	const task = container.get(class extends Task {
+		async run() {
+			task.createChild().disposable(() => t.pass());
+		}
+	});
+	await task.activate();
+	await task.container.dispose();
+});
