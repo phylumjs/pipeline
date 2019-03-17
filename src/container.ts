@@ -16,11 +16,11 @@ export class Container implements DisposableObject {
 	}
 
 	/**
-	 * Add a disposable to the `CompositeDisposable` of this container.
+	 * Add a disposable to the own `CompositeDisposable` of this container.
 	 * @param disposable The disposable
 	 */
 	public disposable(disposable: Disposable) {
-		this.get(CompositeDisposable).add(disposable);
+		this.getOwn(CompositeDisposable).add(disposable);
 		return this;
 	}
 
