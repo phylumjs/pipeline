@@ -91,3 +91,28 @@ export class FutureDisposable implements DisposableObject {
 		}
 	}
 }
+
+/**
+ * A disposable that is composed of multiple disposables.
+ */
+export class CompositeDisposable implements DisposableObject {
+	private _disposables = new Set<Disposable>();
+
+	/**
+	 * Add a disposable.
+	 * @param disposable The disposable.
+	 */
+	public add(disposable: Disposable) {
+		this._disposables.add(disposable);
+		return this;
+	}
+
+	public async dispose() {
+		const disposals = [];
+		for (const disposable of this._disposables) {
+			dispose(disposable);
+			this._disposables.delete(disposable);
+		}
+		await Promise.all(disposals);
+	}
+}

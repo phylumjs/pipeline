@@ -1,5 +1,5 @@
 
-import { DisposableObject, isDisposableObject } from './disposable';
+import { CompositeDisposable, Disposable, DisposableObject, isDisposableObject } from './disposable';
 
 /**
  * The environment in which tasks are executed.
@@ -13,6 +13,15 @@ export class Container implements DisposableObject {
 	 * @param {Container} parentContainer The parent container.
 	 */
 	public constructor(public readonly parentContainer?: Container) {
+	}
+
+	/**
+	 * Add a disposable to the `CompositeDisposable` of this container.
+	 * @param disposable The disposable
+	 */
+	public disposable(disposable: Disposable) {
+		this.get(CompositeDisposable).add(disposable);
+		return this;
 	}
 
 	/**
