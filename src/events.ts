@@ -186,4 +186,16 @@ export class EventClient {
 		}
 		return false;
 	}
+
+	/**
+	 * Invoke a hook on all attached event aggregators.
+	 * @param {H} hook The hook.
+	 * @returns {Promise<R>} The hook result.
+	 * @template H The hook type.
+	 * @template R The hook result type.
+	 */
+	protected invoke<H extends Hook<any, R>, R = H extends Hook<any, infer R> ? R : never>(hook: H): Promise<R> {
+		this.publish(hook);
+		return hook.invoke();
+	}
 }
