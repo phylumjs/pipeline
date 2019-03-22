@@ -9,9 +9,6 @@ export default new Router({
 	mode: 'hash',
 	routes: [
 		{path: '/', component: () => import('./components/page-home')},
-		{path: '/manual/tasks', component: () => import('../manual/tasks')},
-		{path: '/manual/containers', component: () => import('../manual/containers')},
-		{path: '/manual/events', component: () => import('../manual/events')},
-		{path: '*', component: () => import('./components/page-not-found')},
+		{path: '*', component: () => import('./components/page-not-found')}
 	]
 });
