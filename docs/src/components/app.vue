@@ -6,11 +6,11 @@
 				<b-navbar-brand to="/">PhylumJS</b-navbar-brand>
 				<b-collapse is-nav id="nav_collapse">
 					<b-navbar-nav class="ml-auto">
-						<b-nav-dd text="Manual">
+						<!-- <b-nav-dd text="Manual">
 							<b-dd-item to="/manual/tasks">Tasks</b-dd-item>
 							<b-dd-item to="/manual/containers">Containers</b-dd-item>
 							<b-dd-item to="/manual/events">Events</b-dd-item>
-						</b-nav-dd>
+						</b-nav-dd> -->
 						<b-nav-item href="https://github.com/phylumjs" target="_blank">GitHub</b-nav-item>
 					</b-navbar-nav>
 				</b-collapse>
