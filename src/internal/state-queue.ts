@@ -15,4 +15,8 @@ export class StateQueue<T> {
 	public get latest() {
 		return this._latest;
 	}
+
+	public clear() {
+		this._latest = null;
+	}
 }
