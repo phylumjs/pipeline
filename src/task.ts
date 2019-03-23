@@ -7,8 +7,6 @@ export type TaskFunc<T> = (task: Task<T>) => void | Promise<T>;
 
 export type TaskConsumer<T> = (value: Promise<T>) => void;
 
-export type TaskErrorHandler<T> = (error: any, origin: Task<T>) => boolean | void;
-
 export class Task<T> {
 	public constructor(func: TaskFunc<T>) {
 		if (typeof func !== 'function') {
@@ -25,10 +23,10 @@ export class Task<T> {
 	private readonly _consumers = new Set<TaskConsumer<T>>();
 	private readonly _sources = new Map<Task<any>, Promise<any>>();
 	private readonly _dependencies = new Map<Task<any>, Disposable>();
-	private readonly _errorHandlers = new Set<TaskErrorHandler<T>>();
-	private static readonly _globalErrorHandlers = new Set<TaskErrorHandler<any>>();
 	private _started = false;
 	private _resetting = false;
+
+	public static criticalErrorCallback: (error: any, task: Task<any>) => void;
 
 	public return(value: T | Promise<T>) {
 		if (value instanceof Promise) {
@@ -94,17 +92,11 @@ export class Task<T> {
 
 	private criticalActivity(activity: Promise<any>) {
 		this._activity.put(activity.catch(error => {
-			for (const handler of this._errorHandlers) {
-				if (handler(error, this)) {
-					return;
-				}
+			if (Task.criticalErrorCallback) {
+				Task.criticalErrorCallback(error, this);
+			} else {
+				Promise.reject(error);
 			}
-			for (const globalHandler of Task._globalErrorHandlers) {
-				if (globalHandler(error, this)) {
-					return;
-				}
-			}
-			Promise.reject(error);
 		}));
 	}
 
@@ -190,13 +182,5 @@ export class Task<T> {
 				this.throw(error);
 			});
 		}
-	}
-
-	public addErrorHandler(handler: TaskErrorHandler<T>) {
-		this._errorHandlers.add(handler);
-	}
-
-	public static addGlobalErrorHandler(handler: TaskErrorHandler<any>) {
-		this._globalErrorHandlers.add(handler);
 	}
 }

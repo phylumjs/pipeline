@@ -34,27 +34,3 @@ test('constructor assertions', t => {
     // @ts-ignore
     t.throws(() => new Task('foo'));
 });
-
-test('error handler', async t => {
-    const task = new Task(() => {});
-    task.addErrorHandler(error => {
-        t.is(error, 'foo');
-        return true;
-    });
-    task.using(async () => {
-        throw 'foo';
-    });
-    await task.inactive();
-});
-
-test('global error handler', async t => {
-    const task = new Task(() => {});
-    Task.addGlobalErrorHandler(error => {
-        t.is(error, 'foo');
-        return true;
-    });
-    task.using(async () => {
-        throw 'foo';
-    });
-    await task.inactive();
-});
