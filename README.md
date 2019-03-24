@@ -9,6 +9,8 @@ This is a preview of the next major version of phylumjs. It is a complete redesi
 + The order in which task output resolves was not specified.
 + Tasks were only re-executed when required by a dependent.
 
+### [Documentation](https://phylum.js.org/)
+
 ## Packaged Includes
 | Path | Type | Entry Point |
 |-|-|-|
