@@ -183,4 +183,22 @@ export class Task<T> {
 			});
 		}
 	}
+
+	public transform<P>(transform: (value: T) => P) {
+		const task = Object.create(this);
+		task.pipe = (consumer: TaskConsumer<P>) => {
+			this.pipe(state => consumer(state.then(transform)));
+		};
+		return task as Task<P>;
+	}
+
+	public extract<P extends keyof T>(prop: P) {
+		return this.transform(value => value[prop]);
+	}
+
+	public static value<T>(value: T): Task<T> {
+		return new Task(task => {
+			task.return(value);
+		});
+	}
 }
