@@ -17,7 +17,7 @@ At first, install the core library and the cli:
 npm i @phylum/pipeline @phylum/cli
 ```
 
-Create a file **pipeline.js** in your project root:
+Create a file **pipeline.js** in your project root that exports the main task:
 ```js
 'use strict';
 
