@@ -12,7 +12,6 @@ class Renderer extends marked.Renderer {
 		if (/^https?:\/\//.test(href)) {
 			return `<a href="${escape(href)}" target="_blank">${escape(text)}</a>`;
 		}
-		// TODO: Transform relative links ending with '.md'
 		return super.link(href, title, text);
 	}
 }
@@ -23,6 +22,24 @@ module.exports = function (content) {
 		renderer: new Renderer(),
 		headerIds: false,
 		highlight: (code, lang) => {
+			const parts = [];
+			const partRegex = /\@\@(\w+)\n((?:.|\n)+?)(\@\@\w+|$)/g;
+			let part;
+			while (part = partRegex.exec(code)) {
+				const [, lang, code, overlap] = part;
+				partRegex.lastIndex -= overlap.length;
+				parts.push({lang, code});
+			}
+			if (parts.length > 0) {
+				return `<app-localized-code :langs='${
+					JSON.stringify(parts.map(({lang}) => lang))
+				}'>${
+					parts.map(({lang, code}) => {
+						console.log(lang, code);
+						return `<template :slot='${JSON.stringify(lang)}'>${highlight(lang, code).value.trim()}</template>`;
+					}).join('<br>')
+				}</app-localized-code>`;
+			}
 			return lang ? highlight(lang, code, true).value : code;
 		}
 	}, (error, html) => {

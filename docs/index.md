@@ -1,8 +1,3 @@
-
-## Status
-A new major version is currently under development.
-Version 3 docs are still available [here](https://github.com/phylumjs/docs-v3/tree/master/src/pages).
-
 # Introduction
 
 ## What is PhylumJS?
@@ -18,12 +13,20 @@ npm i @phylum/pipeline @phylum/cli
 ```
 
 Create a file **pipeline.js** in your project root that exports the main task:
-```js
+```ts
+@@js
 'use strict';
 
 const { Task } = require('@phylum/pipeline');
 
 exports.default = new Task(async t => {
+	console.log('Hello World!');
+});
+
+@@ts
+import { Task } from '@phylum/pipeline';
+
+export default new Task(async t => {
 	console.log('Hello World!');
 });
 ```
@@ -51,7 +54,7 @@ new Task(t => {
 ## Dependencies
 A task can consume the single result of another task.<br>
 Whenever the consumed task emits a new result, the dependent task will be reset and use the new result in the next iteration.
-```js
+```ts
 const getMessage = new Task(async () => {
 	return 'Hello World!';
 });
