@@ -15,7 +15,13 @@ test('transform', async t => {
 	const fixed = Task.value(6);
 	const transformed = fixed.transform(value => value * 7);
 	transformed.start();
-	t.is(await next(transformed), 42);
+	const value = await new Promise((resolve, reject) => {
+		const disposable = transformed.pipe(state => {
+			state.then(resolve, reject);
+		});
+		t.truthy(disposable);
+	});
+	t.is(value, 42);
 });
 
 test('extract', async t => {

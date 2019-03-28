@@ -255,7 +255,7 @@ export class Task<T> {
 	public transform<P>(transform: (value: T) => P) {
 		const task = Object.create(this);
 		task.pipe = (consumer: TaskConsumer<P>) => {
-			this.pipe(state => consumer(state.then(transform)));
+			return this.pipe(state => consumer(state.then(transform)));
 		};
 		return task as Task<P>;
 	}
