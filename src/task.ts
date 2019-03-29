@@ -168,7 +168,7 @@ export class Task<T> {
 	 * Add a dependency and get it's latest result.
 	 * When the dependency updates it's result, this task will be reset.
 	 * @param source The dependency.
-	 * @returns The latest result.
+	 * @returns The latest result. If the dependency is stopped or reset before a result has been emitted, it will reject with an error.
 	 */
 	public use<T>(source: Task<T>): Promise<T> {
 		let promise: Promise<T> = this._sources.get(source);
