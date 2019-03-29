@@ -185,6 +185,11 @@ export class Task<T> {
 					}
 				});
 				this.addDependency(source);
+				source.using(() => {
+					if (!pushed) {
+						reject(new Error('The task has been disposed before emitting an initial result.'));
+					}
+				});
 			}));
 		}
 		return promise;

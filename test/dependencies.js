@@ -46,7 +46,7 @@ test('manual add / auto remove', async t => {
 test('auto add / manual remove', async t => {
     let added = false;
     let removed = false;
-    const a = new Task(task => {
+    const a = new Task(async task => {
         task.using(() => {
             removed = true;
         });
@@ -60,6 +60,25 @@ test('auto add / manual remove', async t => {
         task.removeDependency(a);
         await ticks(1);
         t.true(removed);
+    });
+    b.start();
+    await ticks(1);
+    await b.inactive();
+});
+
+test('dependency rejects, if disposed before result is emitted', async t => {
+    t.plan(2);
+    let used = false;
+    const a = new Task(() => {
+        used = true;
+    });
+    const b = new Task(async task => {
+        task.use(a).catch(error => {
+            t.true(error instanceof Error);
+        });
+        await ticks(1);
+        t.true(used);
+        task.removeDependency(a);
     });
     b.start();
     await ticks(1);
