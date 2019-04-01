@@ -258,11 +258,9 @@ export class Task<T> {
 	 * @returns An extension of this task.
 	 */
 	public transform<P>(transform: (value: T) => P) {
-		const task = Object.create(this);
-		task.pipe = (consumer: TaskConsumer<P>) => {
-			return this.pipe(state => consumer(state.then(transform)));
-		};
-		return task as Task<P>;
+		return new Task<P>(async t => {
+			return t.use(this).then(transform);
+		});
 	}
 
 	/**
