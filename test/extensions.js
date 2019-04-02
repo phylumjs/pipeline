@@ -30,3 +30,8 @@ test('extract', async t => {
 	extracted.start();
 	t.is(await next(extracted), 'bar');
 });
+
+test('use static', async t => {
+	const task = Task.value(42);
+	t.is(await Task.use(task), 42);
+});

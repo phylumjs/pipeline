@@ -31,6 +31,7 @@ export class Task<T> {
 	private readonly _activity = new ActivityBag();
 	private readonly _dependents = new Set<symbol>();
 	private readonly _resources = new Set<AsyncDisposable>();
+	private readonly _persistentResources = new Set<AsyncDisposable>();
 	private readonly _output = new StateQueue<T>();
 	private readonly _consumers = new Set<TaskConsumer<T>>();
 	private readonly _sources = new Map<Task<any>, Promise<any>>();
@@ -80,6 +81,19 @@ export class Task<T> {
 		}
 	}
 
+	/**
+	 * Register a resource to be disposed when this task is stopped.
+	 * If this task is currently stopped, the resource is disposed immediately.
+	 * @param resource The resource.
+	 */
+	public usingPersistent(resource: AsyncDisposable) {
+		if (this._started) {
+			this._persistentResources.add(resource);
+		} else {
+			this.criticalActivity(disposeAsync(resource));
+		}
+	}
+
 	private disposeResources() {
 		for (const resource of this._resources) {
 			this._resources.delete(resource);
@@ -87,19 +101,24 @@ export class Task<T> {
 		}
 	}
 
+	private disposePersistentResources() {
+		for (const resource of this._persistentResources) {
+			this._persistentResources.delete(resource);
+			this.criticalActivity(disposeAsync(resource));
+		}
+	}
+
 	/**
-	 * Add and start a dependency.
+	 * Add and start a dependency if this task is currently started.
 	 * @param source The dependency.
 	 */
 	public addDependency(source: Task<any>) {
-		if (this._dependencies.has(source)) {
-			return;
-		}
-		const dependency = source.start();
 		if (this._started) {
+			if (this._dependencies.has(source)) {
+				return;
+			}
+			const dependency = source.start();
 			this._dependencies.set(source, dependency);
-		} else {
-			dispose(dependency);
 		}
 	}
 
@@ -153,13 +172,23 @@ export class Task<T> {
 	 * Pipe the results of this task to the specified consumer.
 	 * Outdated results are discarded.
 	 * @param consumer The consumer.
+	 * @param latest True to asynchronously push the current latest result. Default is true.
 	 */
-	public pipe(consumer: TaskConsumer<T>): Disposable {
+	public pipe(consumer: TaskConsumer<T>, latest: boolean = true): Disposable {
 		this._consumers.add(consumer);
-		if (this._output.latest) {
-			Promise.resolve().then(() => consumer(this._output.latest));
+		let removed = false;
+		if (latest) {
+			const state = this._output.latest;
+			if (state) {
+				Promise.resolve().then(() => {
+					if (!removed) {
+						consumer(state);
+					}
+				});
+			}
 		}
 		return () => {
+			removed = true;
 			this._consumers.delete(consumer);
 		}
 	}
@@ -168,7 +197,7 @@ export class Task<T> {
 	 * Add a dependency and get it's latest result.
 	 * When the dependency updates it's result, this task will be reset.
 	 * @param source The dependency.
-	 * @returns The latest result. If the dependency is stopped or reset before a result has been emitted, it will reject with an error.
+	 * @returns The latest result. If the dependency is stopped before emitting a result, the promise will be rejected as it is assumed, that the task will never emit a result.
 	 */
 	public use<T>(source: Task<T>): Promise<T> {
 		let promise: Promise<T> = this._sources.get(source);
@@ -185,14 +214,33 @@ export class Task<T> {
 					}
 				});
 				this.addDependency(source);
-				source.using(() => {
+				source.usingPersistent(() => {
 					if (!pushed) {
-						reject(new Error('The task has been disposed before emitting an initial result.'));
+						reject(new Error('The task has been stopped before emitting a result or the dependent task was already stopped.'));
 					}
 				});
 			}));
 		}
 		return promise;
+	}
+
+	/**
+	 * Get a single output of a task and start it if needed.
+	 * @param task The task.
+	 * @returns The latest result.
+	 */
+	public static use<T>(task: Task<T>): Promise<T> {
+		return new Promise((resolve, reject) => {
+			const dependency = task.start();
+			let pushed = false;
+			const consumer = task.pipe(state => {
+				dispose(consumer);
+				pushed = true;
+				state.then(resolve, reject).then(() => {
+					dispose(dependency);
+				});
+			});
+		});
 	}
 
 	/**
@@ -220,6 +268,7 @@ export class Task<T> {
 			if (this._dependents.size === 0 && this._started) {
 				this._started = false;
 				this.disposeResources();
+				this.disposePersistentResources();
 				this.inactive().then(() => {
 					this._sources.clear();
 					this._output.clear();

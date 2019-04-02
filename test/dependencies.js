@@ -66,7 +66,7 @@ test('auto add / manual remove', async t => {
     await b.inactive();
 });
 
-test('dependency rejects, if disposed before result is emitted', async t => {
+test('dependency rejects, if stopped before result is emitted', async t => {
     t.plan(2);
     let used = false;
     const a = new Task(() => {
@@ -85,15 +85,25 @@ test('dependency rejects, if disposed before result is emitted', async t => {
     await b.inactive();
 });
 
-test('add dependency while stopped', async t => {
-    let disposed = false;
-    const a = new Task(task => {
-        task.using(() => {
-            disposed = true;
-        });
+test('add dependency while stopped is ignored', async t => {
+    const a = new Task(() => {
+        t.fail();
     });
     const b = new Task(() => {});
     b.addDependency(a);
-    await b.inactive();
-    t.true(disposed);
+    await ticks(1);
+    t.pass();
+});
+
+test('ignore latest output when consumer is disposed immediately', async t => {
+    const a = new Task(async () => {
+        return 42;
+    });
+    a.start();
+    await a.inactive();
+    dispose(a.pipe(() => {
+        t.fail();
+    }));
+    await ticks(1);
+    t.pass();
 });
