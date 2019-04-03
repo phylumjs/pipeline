@@ -330,4 +330,28 @@ export class Task<T> {
 			task.return(value);
 		});
 	}
+
+	/**
+	 * Wrap a function into a task that uses the specified input task.
+	 * @param fn The function to wrap.
+	 * @param input The input task.
+	 * @returns a function that returns the result of the wrapped function.
+	 */
+	public static wrap<T, R>(fn: (arg: T) => R | Promise<R>, input: Task<T>): Task<R> {
+		return new Task<R>(async t => {
+			return fn(await t.use(input));
+		});
+	}
+
+	/**
+	 * Wrap a function into a task that uses the specified input task.
+	 * @param fn The function to wrap.
+	 * @param input The input task.
+	 * @returns a function that returns the result of the wrapped function.
+	 */
+	public static wrapN<T extends any[], R>(fn: (...args: T) => R | Promise<R>, input: Task<T>): Task<R> {
+		return new Task<R>(async t => {
+			return fn(...await t.use(input));
+		});
+	}
 }

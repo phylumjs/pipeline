@@ -35,3 +35,26 @@ test('use static', async t => {
 	const task = Task.value(42);
 	t.is(await Task.use(task), 42);
 });
+
+test('wrap', async t => {
+	/**
+	 * @param {number} v
+	 */
+	function fn(v) {
+		return v * 6;
+	}
+	const task = Task.wrap(fn, Task.value(7));
+	t.is(await Task.use(task), 42);
+});
+
+test('wrapN', async t => {
+	/**
+	 * @param {number} a
+	 * @param {number} b
+	 */
+	function fn(a, b) {
+		return a * b * 2;
+	}
+	const task = Task.wrapN(fn, Task.value([3, 7]));
+	t.is(await Task.use(task), 42);
+})
