@@ -35,7 +35,6 @@ module.exports = function (content) {
 					JSON.stringify(parts.map(({lang}) => lang))
 				}'>${
 					parts.map(({lang, code}) => {
-						console.log(lang, code);
 						return `<template :slot='${JSON.stringify(lang)}'>${highlight(lang, code).value.trim()}</template>`;
 					}).join('<br>')
 				}</app-localized-code>`;
