@@ -306,7 +306,7 @@ export class Task<T> {
 	 * @param transform The output transform.
 	 * @returns An extension of this task.
 	 */
-	public transform<P>(transform: (value: T) => P) {
+	public transform<P>(transform: (value: T) => P): Task<P> {
 		return new Task<P>(async t => {
 			return t.use(this).then(transform);
 		});

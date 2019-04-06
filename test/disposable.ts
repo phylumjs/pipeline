@@ -1,8 +1,6 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import { dispose, disposeAsync } from '..';
+import { dispose, disposeAsync } from '../src';
 
 test('function disposable', t => {
 	dispose(() => t.pass());

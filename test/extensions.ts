@@ -1,9 +1,7 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import next from './util/next';
-import { Task } from '..';
+import { next } from './util';
+import { Task } from '../src';
 
 test('fixed value', async t => {
 	const fixed = Task.value('foo');
@@ -40,7 +38,7 @@ test('wrap', async t => {
 	/**
 	 * @param {number} v
 	 */
-	function fn(v) {
+	function fn(v: number) {
 		return v * 6;
 	}
 	const task = Task.wrap(fn, Task.value(7));
@@ -52,7 +50,7 @@ test('wrapN', async t => {
 	 * @param {number} a
 	 * @param {number} b
 	 */
-	function fn(a, b) {
+	function fn(a: number, b: number) {
 		return a * b * 2;
 	}
 	const task = Task.wrapN(fn, Task.value([3, 7]));

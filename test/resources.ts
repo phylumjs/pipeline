@@ -1,8 +1,6 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import { Task, dispose } from '..';
+import { Task, dispose } from '../src';
 
 test('normal dispose immediately', t => {
 	const task = Task.value(null);

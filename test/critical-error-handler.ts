@@ -1,8 +1,6 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import { Task } from '..';
+import { Task } from '../src';
 
 test('global error handler', async t => {
     const task = new Task(() => {});

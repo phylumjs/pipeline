@@ -2,9 +2,8 @@
 'use strict';
 
 import test from 'ava';
-import capture from './util/capture';
-import ticks from './util/ticks';
-import { dispose, Task } from '..';
+import { capture, ticks } from './util';
+import { dispose, Task } from '../src';
 
 test('use dependency', async t => {
     const a = new Task(async () => 6);
@@ -46,13 +45,13 @@ test('manual add / auto remove', async t => {
 test('auto add / manual remove', async t => {
     let added = false;
     let removed = false;
-    const a = new Task(async task => {
+    const a = new Task<void>(async task => {
         task.using(() => {
             removed = true;
         });
         added = true;
     });
-    const b = new Task(async task => {
+    const b = new Task<void>(async task => {
         task.use(a);
         await ticks(1);
         t.true(added);
@@ -72,7 +71,7 @@ test('dependency rejects, if stopped before result is emitted', async t => {
     const a = new Task(() => {
         used = true;
     });
-    const b = new Task(async task => {
+    const b = new Task<void>(async task => {
         task.use(a).catch(error => {
             t.true(error instanceof Error);
         });

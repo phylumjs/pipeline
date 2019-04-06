@@ -1,13 +1,11 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import ticks from './util/ticks';
-import { dispose, Task } from '..';
+import { ticks } from './util';
+import { dispose, Task } from '../src';
 
 test('start / stop', async t => {
     const steps = [];
-    const task = new Task(async task => {
+    const task = new Task<void>(async task => {
         task.using(() => {
             steps.push('dispose');
         });
@@ -22,7 +20,7 @@ test('start / stop', async t => {
 
 test('reset', async t => {
     const steps = [];
-    const task = new Task(async task => {
+    const task = new Task<void>(async task => {
         task.using(async () => {
             await ticks(1);
             steps.push('dispose');
@@ -38,7 +36,7 @@ test('reset', async t => {
 
 test('reset / stop (overlap)', async t => {
     const steps = [];
-    const task = new Task(async task => {
+    const task = new Task<void>(async task => {
         task.using(async () => {
             await ticks(2);
             steps.push('dispose');
@@ -56,7 +54,7 @@ test('reset / stop (overlap)', async t => {
 
 test('stop / reset (overlap)', async t => {
     const steps = [];
-    const task = new Task(async task => {
+    const task = new Task<void>(async task => {
         task.using(async () => {
             await ticks(2);
             steps.push('dispose');

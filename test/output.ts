@@ -1,11 +1,7 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import capture from './util/capture';
-import next from './util/next';
-import ticks from './util/ticks';
-import { dispose, Task } from '..';
+import { capture, ticks, next } from './util';
+import { dispose, Task } from '../src';
 
 test('order', async t => {
     const task = new Task(async task => {

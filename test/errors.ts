@@ -1,10 +1,7 @@
-// @ts-check
-'use strict';
 
 import test from 'ava';
-import capture from './util/capture';
-import next from './util/next';
-import { Task } from '..';
+import { capture, next } from './util';
+import { Task } from '../src';
 
 test('catch synchronous start error', async t => {
     const task = new Task(() => {
@@ -22,7 +19,7 @@ test('catch synchronous start error after reset', async t => {
             task.return('foo');
         }
     });
-    const dependent = await task.start();
+    await task.start();
     t.is(await next(task), 'foo');
     reset = true;
     task.reset();
