@@ -1,6 +1,6 @@
 {
 	"name": "@phylum/pipeline",
-	"version": "4.0.4",
+	"version": "4.1.0",
 	"description": "Flexible Async JavaScript Task Runner",
 	"main": "dist/node/index.js",
 	"browser": "dist/es/index.js",
