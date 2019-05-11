@@ -29,8 +29,9 @@
 		"ava": "^1.4.1",
 		"concurrently": "^4.1.0",
 		"coveralls": "^3.0.3",
-		"nyc": "^13.3.0",
+		"nyc": "^14.1.1",
 		"rimraf": "^2.6.3",
+		"rxjs": "^6.5.2",
 		"typescript": "^3.4.2"
 	},
 	"repository": "github:phylumjs/pipeline",

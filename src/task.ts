@@ -332,6 +332,18 @@ export class Task<T> {
 	}
 
 	/**
+	 * Create a task from an observable.
+	 * *This is an experimental feature*
+	 * @param source The observable.
+	 */
+	public static observable<T>(source: Observable<T>) {
+		return new Task<T>(task => {
+			const sub = source.subscribe(value => task.return(value));
+			task.usingPersistent(() => sub.unsubscribe());
+		});
+	}
+
+	/**
 	 * Wrap a function into a task that uses the specified input task.
 	 * @param fn The function to wrap.
 	 * @param input The input task.
@@ -354,4 +366,12 @@ export class Task<T> {
 			return fn(...await t.use(input));
 		});
 	}
+}
+
+interface Observable<T> {
+	subscribe(observer: (value: T) => any): ObservableSubscription;
+}
+
+interface ObservableSubscription {
+	unsubscribe(): any;
 }
